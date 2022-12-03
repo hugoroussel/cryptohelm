@@ -1,5 +1,5 @@
 {
-  "name": "Smart Contract Verification",
+  "name": "MetaScan",
   "description": "Yes",
   "version": "1.0",
   "manifest_version": 3,
@@ -8,7 +8,7 @@
       "default_title": "Open the popup"
   },
   "permissions": [
-    "activeTab"
+    "activeTab", "scripting"
   ],
   "content_scripts": [
     {

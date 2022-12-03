@@ -7,6 +7,9 @@ const messagesFromReactAppListener = (
    sendResponse: (response: DOMMessageResponse) => void) => {
   
    console.log('[content.js]. Message received', msg);
+   // localStorage.setItem('messages', "");
+   // prepare array for local storage
+   localStorage.setItem('messages', msg.addresses);
  
    const headlines = Array.from(document.getElementsByTagName<"h1">("h1"))
                        .map(h1 => h1.innerText);
