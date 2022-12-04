@@ -1,29 +1,30 @@
-import { DOMMessage, DOMMessageResponse } from "../types";
+import { DOMMessage, DOMMessageResponse } from '../types';
  
 // Function called when a new message is received
 const messagesFromReactAppListener = (
-   msg: DOMMessage,
-   sender: chrome.runtime.MessageSender,
-   sendResponse: (response: DOMMessageResponse) => void) => {
-  
-   console.log('[content.js]. Message received', msg);
-   // localStorage.setItem('messages', "");
-   // prepare array for local storage
-   localStorage.setItem('messages', msg.addresses);
+  msg: DOMMessage,
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response: DOMMessageResponse) => void) => {
+  console.log('[content.js]. Message received', msg);
+  localStorage.setItem('messages', msg.addresses);
  
-   const headlines = Array.from(document.getElementsByTagName<"h1">("h1"))
-                       .map(h1 => h1.innerText);
+  const headlines = Array.from(document.getElementsByTagName<'h1'>('h1'))
+    .map(h1 => h1.innerText);
  
-    // Prepare the response object with information about the site
-   const response: DOMMessageResponse = {
-       title: document.title,
-       headlines
-   };
+  // Prepare the response object with information about the site
+  const response: DOMMessageResponse = {
+    title: document.title,
+    headlines
+  };
  
-   sendResponse(response);
-}
+  sendResponse(response);
+};
  
 /**
 * Fired when a message is sent from either an extension process or a content script.
 */
 chrome.runtime.onMessage.addListener(messagesFromReactAppListener);
+
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  console.log('tab changed!', tabId, changeInfo, tab);
+});
