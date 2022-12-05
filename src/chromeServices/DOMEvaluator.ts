@@ -5,7 +5,7 @@ const messagesFromReactAppListener = (
   msg: DOMMessage,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: DOMMessageResponse) => void) => {
-  console.log('[content.js]. Message received', msg);
+  // console.log('[content.js]. Message received', msg);
   localStorage.setItem('messages', msg.addresses);
  
   const headlines = Array.from(document.getElementsByTagName<'h1'>('h1'))

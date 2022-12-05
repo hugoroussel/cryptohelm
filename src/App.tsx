@@ -49,84 +49,135 @@ function getAddresses() {
 
 async function filterAddresses(addresses: string[]): Promise<TokenListToken[]> {
   console.log('filtering against token lists...');
-  // get the token list from uniswap using axios
-  const tokenList = await axios.get('https://gateway.ipfs.io/ipns/tokens.uniswap.org');
+  // 1inch token list
+  const tokenList = await axios.get('https://wispy-bird-88a7.uniswap.workers.dev/?url=http://tokens.1inch.eth.link');
   console.log('token list', tokenList.data.tokens);
   const uniDefaultTokens = tokenList.data.tokens as TokenListToken[];
-  // find the tokens that are in the token list
   const foundTokens = uniDefaultTokens.filter((token) => addresses.includes(token.address));
-  // const filteredERC20s = addresses.filter((address) => uniDefaultTokens.find((token) => token.address === address));
-  console.log('filtered ERC20s', foundTokens);
   return foundTokens;
 }
 
 
 function App() {
 
-  const [tabData, setTabData] = useState<TabData| null>(null);
+  const [tabData, setTabData] = useState<TabData| null>({favIconUrl: 'https://static.debank.com/image/matic_nft/local_url/5df849b06af0e9ea7bcbb8c1804304a4/59211315b16c0553e7e63bb5f536d37e.png', title: '', url: 'unknown'});
   const [activeAddresses, setActiveAddresses] = useState<string[]>([]);
   const [activeTokens, setActiveTokens] = useState<TokenListToken[]>([]);
+  const [showTokens, setShowTokens] = useState<boolean>(false);
+  const [showAllAddresses, setShowAllAddresses] = useState<boolean>(false);
+
+  // define an empty chrome tab
+  const nullTab: chrome.tabs.Tab = {
+    active: false,
+    audible: false,
+    autoDiscardable: false,
+    discarded: false,
+    favIconUrl: '',
+    height: 0,
+    id: 0,} as chrome.tabs.Tab;
+  const [activeTab, setActiveTabId] = useState<chrome.tabs.Tab>(nullTab);
 
   useEffect(() => {
-    chrome.tabs && chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    }, (tabs) => {
-      console.log('all tabs', tabs);
-      // clean the end of the url by removing everything after the third slash
-      const urlCleaned = tabs[0].url?.split('/').slice(0, 3).join('/');
-      const newTabData = {favIconUrl: tabs[0].favIconUrl, title: tabs[0].title, url: urlCleaned} as TabData;
-      setTabData(newTabData);
-      console.log('all the tabs',tabs);
-      chrome.scripting.executeScript(
-        {
-          target: {tabId: tabs[0].id!},
-          func: getAddresses,
-        },
-        (res) => {
-          console.log('result', res);
-        });
-    }); 
+    if(activeTab.id === 0) {
+      return;
+    }
+    const urlCleaned = activeTab?.url?.split('/').slice(0, 3).join('/');
+    const newTabData = {favIconUrl: activeTab?.favIconUrl, title: activeTab?.title, url: urlCleaned} as TabData;
+    setTabData(newTabData);
+    chrome.scripting.executeScript(
+      {
+        target: {tabId: activeTab!.id!},
+        func: getAddresses,
+      },
+      () => {
+        // console.log('script executed);
+      });
     const messages = localStorage.getItem('messages');
     const messagesArray = messages?.split(',') as string[];
     setActiveAddresses(messagesArray);
-    
     async function callFilter() {
       const erc20Tokens = await filterAddresses(messagesArray);
       setActiveTokens(erc20Tokens);
     }
     callFilter();
+  }, [activeTab]);
+
+  useEffect(() => {
+    chrome.tabs && chrome.tabs.query({
+    }, (tabs) => {
+      const activeTab = tabs.find((tab) => tab.active);
+      if (activeTab) {
+        setActiveTabId(activeTab);
+      }
+    });
+    setInterval(() => {
+      console.log('checking for tab change');
+      chrome.tabs && chrome.tabs.query({
+      }, (tabs) => {
+        console.log('all tabs', tabs);
+        const at = tabs.find((tab) => tab.active) as chrome.tabs.Tab;
+        // get active tab from local storage
+        const activeTabId = localStorage.getItem('activeTab');
+        // json parse the active tab
+        const activeTabIdParsed = JSON.parse(activeTabId as string) as chrome.tabs.Tab;
+        console.log('active tab', activeTabIdParsed, activeTabIdParsed === null);      
+        console.log('active tab', at);
+        if(activeTabIdParsed?.id !== at.id || activeTabIdParsed === null) {
+          console.log('tab changed!');
+          localStorage.setItem('activeTab', JSON.stringify(at));
+          setActiveTabId(at);
+        } 
+      });
+    }, 500);
   }, []);
 
 
   return (
     <>
-      <body className='w-[420px] h-[420px] shadow rounded-lg'>
-        <div className="bg-white py-8 px-4 sm:px-10">
-          <div className="text-blue-800 container mx-auto text-3xl font-semibold py-2 text-center">
-          MetaScan
-          </div>
-          
+      <body className='w-[420px] h-[420px] bg-white'>
+        <div className="py-8 px-4 sm:px-10">
           <img src={tabData?.favIconUrl} alt="favicon" className='w-10 h-10 container'/>
           <div className="text-sm text-gray font-bold py-2 text-center">
             Connected to: <a className="text-blue-400" href={tabData?.url} target="_blank" rel="noreferrer">{tabData?.url}</a>
           </div>
-
-          <div className="text-blue mx-auto text-xl text-center font-semibold py-2 align-content">
-            Found {activeAddresses.length} active contract addresses
+          <div className='text-center'>
+            <h3 className="text-lg font-medium leading-6 text-gray-900">This is what we found</h3>
+            <dl className="mt-5 grid grid-cols-1 gap-1 sm:grid-cols-3">
+              <div className="rounded-lg bg-white px-4 py-5 shadow sm:p-6 hover:bg-gray-300" onClick={(e) => {e.preventDefault();setShowAllAddresses(!showAllAddresses);}}>
+                <dt className="text-xs text-gray-500">Total addresses found</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-900">{activeAddresses.length}</dd>
+              </div>
+              {showAllAddresses && activeAddresses.map((address) => (
+                <>
+                  <br/>
+                  <a className="text-blue-400" href={`https://debank.com./profile/${address}`} target="_blank" rel="noreferrer">{address}</a>
+                </>))
+              }
+              <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 hover:bg-gray-300" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
+                <dt className="text-xs text-gray-500">Verified ERC20s</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-900">{activeTokens.length}</dd>
+              </div>
+              {showTokens && activeTokens.map((token) => {
+                return (
+                  <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 hover:bg-gray-300" key={token.symbol}>
+                    <img src={token.logoURI} className="h-5 w-5"/>
+                    <dt className="text-xs text-gray-500">{token.symbol}</dt>
+                    <dt className="text-xs text-gray-500">
+                      <a className="text-blue-400" href={`https://etherscan.io/address/${token.address}`} target="_blank" rel="noreferrer">{token.address}</a>
+                    </dt>
+                  </div>
+                );
+              })}
+              <div className="rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                <dt className="text-xs text-gray-500">Total addresses found</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-900">{activeAddresses.length}</dd>
+              </div>
+            </dl>
           </div>
-
-          {activeAddresses.map((address) => (
-            <>
-              <br/>
-              <a className="text-blue-400" href={`https://debank.com./profile/${address}`} target="_blank" rel="noreferrer">{address}</a>
-            </>))
-          }
-
           <div className="mt-6">
             <div className="container mx-auto">
               <div>
-              Powered by <a className="text-blue" href="https://etherscan.io/" target="_blank" rel="noreferrer">Etherscan</a>
+              Powered by <a className="text-blue-500" href="https://etherscan.io/" target="_blank" rel="noreferrer">Etherscan</a>
               </div>
             </div>
           </div>
