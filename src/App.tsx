@@ -3,7 +3,7 @@ import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
 import { ArrowPathIcon, ShieldCheckIcon, CheckBadgeIcon, ExclamationCircleIcon} from '@heroicons/react/20/solid';
-import {TabData, TokenListToken,NewPageProps} from './structs';
+import {TabData, TokenListToken,NewPageProps,AddressCollection} from './structs';
 import NewPage from './NewPage';
 
 function getAddresses() {
@@ -46,6 +46,7 @@ function App() {
   const [tabData, setTabData] = useState<TabData| null>({favIconUrl: 'https://static.debank.com/image/matic_nft/local_url/5df849b06af0e9ea7bcbb8c1804304a4/59211315b16c0553e7e63bb5f536d37e.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [showStart, setShowStart] = useState<boolean>(false);
+  const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
 
 
   const [activeAddresses, setActiveAddresses] = useState<string[]>([]);
@@ -56,6 +57,7 @@ function App() {
   const [showNfts, setShowNfts] = useState<boolean>(false);
   const [showContracts, setShowContracts] = useState<boolean>(false);
   const [others, setOthers] = useState<string[]>([]);
+  const [nonVerified, setNonVerified] = useState<AddressCollection[]>([]);
 
   // define an empty chrome tab
   const nullTab: chrome.tabs.Tab = {
@@ -93,8 +95,6 @@ function App() {
     if (messagesArray[0] === '') {
       messagesArray = [];
     }
-    // send the addresses to server for analysis
-
     async function runAnalysis() {
       if (messagesArray.length === 0) {
         setActiveAddresses([]);
@@ -106,6 +106,9 @@ function App() {
       setActiveAddresses(res.data.allAddressesWithoutDuplicates);
       setNftTokens(res.data.nfts);
       setOthers(res.data.others);
+      setIndexingNecessary(res.data.indexingNecessary);
+      console.log(res.data);
+      setNonVerified(res.data.nonVerifiedContracts);
     }
     runAnalysis();
   }, [activeTab]);
@@ -173,10 +176,13 @@ function App() {
         <hr/>
 
         <div className="py-4 flex text-center">
-          {activeAddresses.length > 0 && <CheckBadgeIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-blue-400" aria-hidden="true" />}
+          {activeAddresses.length > 0 && !indexingNecessary && <CheckBadgeIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-blue-400" aria-hidden="true" />}
           {activeAddresses.length == 0 && <ExclamationCircleIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-blue-400" aria-hidden="true" />}
+          {indexingNecessary && <ExclamationCircleIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-red-400" aria-hidden="true" />}
           <div className='text-lg font-semibold'>
-            {activeAddresses.length > 0 ? (`Detected at least ${activeAddresses.length} smart contracts on this page, all verified.`) : 'No smart contracts detected'}
+            {activeAddresses.length > 0 && !indexingNecessary && (`Detected ${activeAddresses.length} smart contracts on this page, with ${nonVerified?.length} non-verified contracts`)}
+            {activeAddresses.length == 0 && ('No smart contracts detected')}
+            {activeAddresses.length > 0 && indexingNecessary && ('Indexing is necessary')}
           </div>
         </div>
 

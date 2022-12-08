@@ -1,10 +1,22 @@
-export interface NewPageProps {
-    showStart: boolean;
-    setShowStart: React.Dispatch<React.SetStateAction<boolean>>;
+
+
+
+export interface AddressCollection {
+    // _id: mongoDB.ObjectId;
+    address: string;
+    lastUpdated: number;
+    isContract: boolean;
+    existsOn : number[];
+    verifiedOn: number[];
+    NonVerifiedOn: number[];
 }
 
 
 
+export interface NewPageProps {
+    showStart: boolean;
+    setShowStart: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 export interface TabData {
     favIconUrl: string;
