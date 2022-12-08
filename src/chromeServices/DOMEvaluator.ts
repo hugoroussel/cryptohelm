@@ -25,6 +25,8 @@ const messagesFromReactAppListener = (
 */
 chrome.runtime.onMessage.addListener(messagesFromReactAppListener);
 
+/*
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   console.log('tab changed!', tabId, changeInfo, tab);
 });
+*/
