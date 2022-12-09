@@ -1,5 +1,8 @@
-
-
+export interface ContractsPageProps {
+    contracts: AddressCollection[];
+    showContracts: boolean;
+    setShowContracts: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 export interface AddressCollection {
     // _id: mongoDB.ObjectId;
@@ -8,14 +11,14 @@ export interface AddressCollection {
     isContract: boolean;
     existsOn : number[];
     verifiedOn: number[];
-    NonVerifiedOn: number[];
+    nonverifiedon: number[];
 }
 
-
-
-export interface NewPageProps {
-    showStart: boolean;
-    setShowStart: React.Dispatch<React.SetStateAction<boolean>>;
+export interface ERC20sPageProps {
+    showTokens: boolean;
+    setShowTokens: React.Dispatch<React.SetStateAction<boolean>>;
+    serverLive: boolean;
+    erc20s: TokenListToken[];
 }
 
 export interface TabData {

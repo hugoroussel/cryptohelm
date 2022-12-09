@@ -2,9 +2,13 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { ArrowPathIcon, ShieldCheckIcon, CheckBadgeIcon, ExclamationCircleIcon} from '@heroicons/react/20/solid';
-import {TabData, TokenListToken,NewPageProps,AddressCollection} from './structs';
-import NewPage from './NewPage';
+import { SignalSlashIcon, CheckBadgeIcon, MagnifyingGlassIcon, ExclamationCircleIcon, ShieldExclamationIcon, BoltSlashIcon, BoltIcon} from '@heroicons/react/20/solid';
+import {ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection} from './structs';
+import NewPage from './Tokens';
+import Header from './Header';
+import Contracts from './Contracts';
+import unverifiedPlaceholder from './unverifiedcontracts.json';
+import fs from 'fs';
 
 function getAddresses() {
   const addressesFound: string[] = [];
@@ -48,14 +52,14 @@ function App() {
   const [showStart, setShowStart] = useState<boolean>(false);
   const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
 
+  const [showTokens, setShowTokens] = useState<boolean>(false);
+  const [showNfts, setShowNfts] = useState<boolean>(false);
+  const [showUnverifiedContracts, setShowUnverifiedContracts] = useState<boolean>(false);
+  const [showAllAddresses, setShowAllAddresses] = useState<boolean>(false);
 
   const [activeAddresses, setActiveAddresses] = useState<string[]>([]);
   const [activeTokens, setActiveTokens] = useState<TokenListToken[]>([]);
   const [nftTokens, setNftTokens] = useState<TokenListToken[]>([]);
-  const [showTokens, setShowTokens] = useState<boolean>(false);
-  const [showAllAddresses, setShowAllAddresses] = useState<boolean>(false);
-  const [showNfts, setShowNfts] = useState<boolean>(false);
-  const [showContracts, setShowContracts] = useState<boolean>(false);
   const [others, setOthers] = useState<string[]>([]);
   const [nonVerified, setNonVerified] = useState<AddressCollection[]>([]);
 
@@ -69,11 +73,6 @@ function App() {
     height: 0,
     id: 0,} as chrome.tabs.Tab;
   const [activeTab, setActiveTabId] = useState<chrome.tabs.Tab>(nullTab);
-
-  function callGoServer(){
-    console.log('calling go server with ', others.length);
-    axios.post(`${process.env.REACT_APP_GO_SERVER_URL}/analyze`, {addresses: others});
-  }
 
   useEffect(() => {
     if(activeTab.id === 0) {
@@ -114,6 +113,14 @@ function App() {
   }, [activeTab]);
 
   useEffect(() => {
+
+    // read the unverified contracts from local file
+
+    const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
+    setNonVerified(placeHolderData);
+
+    
+
     async function livenessCheck() {
       const res = await axios.get(`${process.env.REACT_APP_SERVER_URL}/ping`);
       if (res.data === 'Server is running') {
@@ -143,113 +150,112 @@ function App() {
     }, 500);
   }, []);
 
-  const NewPageProps: NewPageProps = {
-    showStart: showStart,
-    setShowStart: setShowStart,
+  const erc20PageProps: ERC20sPageProps = {
+    showTokens: showTokens,
+    setShowTokens: setShowTokens,
+    serverLive: serverLive,
+    erc20s: activeTokens,
   };
+
+  const nftsPageProps: ERC20sPageProps = {
+    showTokens: showNfts,
+    setShowTokens: setShowNfts,
+    serverLive: serverLive,
+    erc20s: nftTokens,
+  };
+
+  const unverifiedContractPageProps : ContractsPageProps = {
+    contracts: nonVerified,
+    showContracts: showUnverifiedContracts,
+    setShowContracts: setShowUnverifiedContracts,
+  };
+
+  // etherscan light blue #3498db
 
   return (
     <>
-      {showStart && <NewPage {...NewPageProps}/>}
-      <body className='w-[340px] h-[450px] bg-white'>
-        <div className="bg-[#D9D9D9] h-[31px] grid grid-cols-4 gap-4 rounded-sm">
-          <div className="flex">
-            <ShieldCheckIcon className="h-7 pt-1 pr-1 text-[#3C4D7B] flex-shrink-0" aria-hidden="true" />
-            <div className="text-lg pt-0.5 text-gray-800">Metascan</div>
-          </div>
-          <div></div>
-          <div></div>
-          <div className="flex justify-end pt-2">
-            <ArrowPathIcon className="h-10 pb-6 pr-2 text-gray-900 hover:text-gray-400" aria-hidden="true" onClick={(e)=>{e.preventDefault();callGoServer();}} />
-            <div className="text-xs pr-1">
-              {serverLive ? '🟢' : '🔴'}
-            </div>
-          </div>
-        </div>
+      {showTokens && <NewPage {...erc20PageProps}/>}
+      {showNfts && <NewPage {...nftsPageProps}/>}
+      {showUnverifiedContracts && <Contracts {...unverifiedContractPageProps}/>}
+      {!showUnverifiedContracts && !showNfts &&!showTokens &&
 
-        <div>
-          <img src={tabData?.favIconUrl} alt="favicon" className='w-10 h-10 container my-2'/>
-          <div className="text-sm text-gray text-center pb-2">
+        <body className='w-[340px] h-[450px] bg-white'>
+          <Header/>
+
+          <div>
+            <img src={tabData?.favIconUrl} alt="favicon" className='w-10 h-10 container my-2'/>
+            <div className="text-sm text-gray text-center pb-2">
             Connected to: <a className="text-blue-400" href={tabData?.url} target="_blank" rel="noreferrer">{tabData?.url}</a>
-          </div>
-        </div>
-        <hr/>
-
-        <div className="py-4 flex text-center">
-          {activeAddresses.length > 0 && !indexingNecessary && <CheckBadgeIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-blue-400" aria-hidden="true" />}
-          {activeAddresses.length == 0 && <ExclamationCircleIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-blue-400" aria-hidden="true" />}
-          {indexingNecessary && <ExclamationCircleIcon className="h-10 pb-2 pl-2 flex-shrink-0 self-center text-red-400" aria-hidden="true" />}
-          <div className='text-lg font-semibold'>
-            {activeAddresses.length > 0 && !indexingNecessary && (`Detected ${activeAddresses.length} smart contracts on this page, with ${nonVerified?.length} non-verified contracts`)}
-            {activeAddresses.length == 0 && ('No smart contracts detected')}
-            {activeAddresses.length > 0 && indexingNecessary && ('Indexing is necessary')}
-          </div>
-        </div>
-
-        <hr/>
-
-        <div className='text-center my-2 mx-2'>
-          <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
-            <div className="rounded-lg bg-[#3C4D7B] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowAllAddresses(!showAllAddresses);}}>
-              <dt className="text-xs text-gray-100">Total addresses</dt>
-              <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{activeAddresses.length}</dd>
             </div>
-            {showAllAddresses && activeAddresses.map((address) => (
-              <>
-                <br/>
-                <a className="text-blue-400" href={`https://debank.com./profile/${address}`} target="_blank" rel="noreferrer">{address}</a>
-              </>))
+          </div>
+
+          <div/>
+
+          <div className="py-2 border-solid border-[#21325b] border-[0.5px] rounded-sm hover:bg-gray-200" onClick={(e)=>{e.preventDefault();setShowStart(!showStart);}}>
+            {activeAddresses.length > 0 && !indexingNecessary && 
+          <>
+            <div className='ml-5 flex items-center font-semibold text-lg'>
+              <CheckBadgeIcon className="h-8 w-8 m-2 text-blue-500 inline" aria-hidden="true" />
+              <div className="text-lg font-semibold">
+              Found {activeAddresses.length} verified contracts
+              </div>
+            </div>
+            <div className='ml-5 flex items-center text-md font-semibold text-lg'>
+              <ShieldExclamationIcon className="h-8 w-8 m-2 text-red-500 inline" aria-hidden="true" />
+              <div className="text-lg font-semibold">
+              Found {nonVerified?.length} unverified contracts
+              </div>
+            </div>
+          </>
             }
-            <div className="rounded-lg bg-[#3C4D7B] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
-              <dt className="text-xs text-gray-100">Verified ERC20s</dt>
-              <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{activeTokens.length}</dd>
+            {activeAddresses.length > 0 && indexingNecessary && 
+          <div className='ml-5 flex items-center'>
+            <MagnifyingGlassIcon className="m-1 h-8 w-8 text-red-800 inline" aria-hidden="true" />
+            <div className="text-lg font-semibold">
+              Indexing.. Please wait a few minutes and refresh.
             </div>
-            {showTokens && activeTokens.map((token) => {
-              return (
-                <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 hover:bg-gray-300" key={token.symbol}>
-                  <img src={token.logoURI} className="h-5 w-5"/>
-                  <dt className="text-xs text-gray-500">{token.symbol}</dt>
-                  <dt className="text-xs text-gray-500">
-                    <a className="text-blue-400" href={`https://etherscan.io/address/${token.address}`} target="_blank" rel="noreferrer">
-                      {
-                        token.address.substring(0, 6) + '...' + token.address.substring(token.address.length - 4, token.address.length)
-                      }</a>
-                  </dt>
-                </div>
-              );
-            })}
-            <div className="rounded-lg bg-[#3C4D7B] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
-              <dt className="text-xs text-gray-100">NFT addresses</dt>
-              <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{nftTokens.length}</dd>
+          </div>
+            }
+            {activeAddresses.length == 0 && 
+          <>
+            <div className='flex items-center ml-7'>
+              <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
+              <div className="text-lg font-semibold">
+                No addresses detected
+              </div>
             </div>
-            {showNfts && nftTokens.map((token) => {
-              return (
-                <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 hover:bg-gray-300" key={token.symbol}>
-                  <img src={token.logoURI} className="h-5 w-5"/>
-                  <dt className="text-xs text-gray-500">{token.symbol}</dt>
-                  <dt className="text-xs text-gray-500">
-                    <a className="text-blue-400" href={`https://etherscan.io/address/${token.address}`} target="_blank" rel="noreferrer">{token.address}</a>
-                  </dt>
-                </div>
-              );
-            })}
-            <div className="rounded-lg bg-[#3C4D7B] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e)=>{e.preventDefault();setShowContracts(!showContracts);}}>
-              <dt className="text-xs text-gray-100">Other Addresses</dt>
-              <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{others.length}</dd>
-            </div>
-            {showContracts && others.map((address) => (
-              <>
-                <br/>
-                <a className="text-blue-400 text-center" href={`https://etherscan.io/address/${address}`} target="_blank" rel="noreferrer">{address}</a>
-              </>))}
-          </dl>
-        </div>
-        <hr/>
-        <div className='pl-1 pt-1 text-center text-md font-light'>
+          </>
+            }
+          </div>
+
+          <div className='text-center my-2 mx-2'>
+            <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
+              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
+                <dt className="text-xs text-gray-100">Unverified Contracts</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{nonVerified.length}</dd>
+              </div>
+              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
+                <dt className="text-xs text-gray-100">Verified ERC20s</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{activeTokens.length}</dd>
+              </div>
+              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
+                <dt className="text-xs text-gray-100">NFT addresses</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{nftTokens.length}</dd>
+              </div>
+              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e)=>{e.preventDefault();}}>
+                <dt className="text-xs text-gray-100">Other Addresses</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{others.length}</dd>
+              </div>
+            </dl>
+          </div>
+          <hr/>
+          <div className='pl-1 pt-1 text-center text-md font-light'>
           Metascan all rights reserved.
-        </div>
-      </body>
+          </div>
+        </body>
+      }
     </>
+
   );
 }
 

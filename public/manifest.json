@@ -7,6 +7,15 @@
       "default_popup": "index.html",
       "default_title": "Open the popup"
   },
+  "commands": {
+      "_execute_browser_action": {
+          "suggested_key": {
+              "default": "Ctrl+Shift+S",
+              "mac": "MacCtrl+Shift+S"
+          },
+          "description": "Open the popup"
+      }
+  },
   "permissions": [
     "activeTab", "scripting"
   ],
