@@ -23,11 +23,11 @@ function ERC20s(pageProps: ERC20sPageProps) {
           <div className="lg:px-8">
             <div className="overflow-hidden">
               <table className="min-w-full divide-y divide-gray-300 table-auto">
-                <thead className="bg-gray-200">
+                <thead className="">
                   <div className="grid grid-cols-7 items-center my-2">
                     <div></div>
                     <div></div>
-                    <div className="ml-7 text-lg flex col-span-3 text-center font-bold">{pageProps.erc20s.length} tokens</div>
+                    <div className="ml-7 text-lg flex col-span-3 text-center text-gray-600 font-semibold">{pageProps.erc20s.length} tokens</div>
                     <div></div>
                     <div>
                       <XMarkIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();pageProps.setShowTokens(!pageProps.showTokens);}}/>
@@ -37,7 +37,7 @@ function ERC20s(pageProps: ERC20sPageProps) {
                 <tbody className="divide-y divide-gray-200 bg-white ">
                   {pageProps.erc20s.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No tokens found :(</div>}
                   {pageProps.erc20s.map((token) => (
-                    <div className="grid grid-cols-7 items-center hover:bg-gray-100" key={token.address}>
+                    <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={token.address}>
                       <div className="ml-2">
                         <img src={token.logoURI} className="h-5 w-5"/>
                       </div>

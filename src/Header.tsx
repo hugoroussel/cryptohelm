@@ -18,12 +18,15 @@ function Header(){
   },[]);
 
   return(
-    <div className="bg-[#979695] h-[31px] grid grid-cols-4 gap-4 rounded-sm">
+    <div className="bg-white h-[31px] grid grid-cols-4 gap-4 rounded-sm">
       <div className="flex">
-        <div className="text-lg pt-0.5 pl-2 border-[#21325b]">Metascan</div>
+        <div></div>
       </div>
-      <div></div>
-      <div></div>
+      <div className="text-lg text-center ml-11 mt-0.5">
+        Metascan
+      </div>
+      <div>
+      </div>
       <div className="flex justify-end">
         <ArrowPathIcon className="h-6 w-6 mt-1 mr-1 text-gray-900 hover:text-gray-400" aria-hidden="true" onClick={(e)=>{e.preventDefault();}} />
         <div className="text-xs mr-1">

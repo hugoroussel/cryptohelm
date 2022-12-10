@@ -1,16 +1,8 @@
 import React, { useEffect } from 'react';
-import {AddressCollection, ContractsPageProps, TokenListToken} from './structs';
+import {AddressCollection, ContractsPageProps} from './structs';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
 import Header from './Header';
 
-function returnLinkToBlockExplorer(token: TokenListToken) {
-  switch (token.chainId) {
-  case 1:
-    return `https://etherscan.io/token/${token.address}`;
-  case 3:
-    return `https://ropsten.etherscan.io/token/${token.address}`;
-  }
-}
 
 function saveToJsonAndDownload(contracts: AddressCollection[]){
   const json = JSON.stringify(contracts);
@@ -32,7 +24,7 @@ function getImageOfLogoUsingChainId(chainId: number) {
   case 10:
     return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png';
   case 137:
-    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/matic/info/logo.png';
+    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png';
   case 42161:
     return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png';
   case 43114:
@@ -81,8 +73,11 @@ function Contracts(pageProps: ContractsPageProps) {
 
   useEffect(() => {
     console.log('contracts', pageProps.contracts);
-    // filter the contract into different lists depending on the unverfiedOn array
-  }, []);
+    // sort the contracts by unverifiedon[0]
+    pageProps.contracts.sort((a, b) => {
+      return a.nonverifiedon[0] - b.nonverifiedon[0];
+    });
+  }, [pageProps]);
 
   return (
     <>
@@ -91,14 +86,14 @@ function Contracts(pageProps: ContractsPageProps) {
         <div className="lg:-mx-8">
           <div className="lg:px-8">
             <div className="overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-300 table-auto">
-                <thead className="bg-gray-200">
+              <table className="min-w-full divide-y table-auto">
+                <thead className="">
                   <div className="grid grid-cols-7 items-center my-2">
                     <div>
                       <ArrowDownTrayIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();saveToJsonAndDownload(pageProps.contracts);}}/>
                     </div>
                     <div></div>
-                    <div className="ml-7 text-lg flex col-span-3 text-center font-bold">{pageProps.contracts.length} contracts</div>
+                    <div className="ml-7 text-lg flex col-span-3 text-center text-gray-600 font-semibold">{pageProps.contracts.length} contracts</div>
                     <div></div>
                     <div>
                       <XMarkIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();pageProps.setShowContracts(!pageProps.showContracts);}}/>
@@ -108,7 +103,7 @@ function Contracts(pageProps: ContractsPageProps) {
                 <tbody className="divide-y divide-gray-200 bg-white ">
                   {pageProps.contracts.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No contracts founds</div>}
                   {pageProps.contracts.map((contract) => (
-                    <div className="grid grid-cols-7 items-center hover:bg-gray-100" key={contract.address}>
+                    <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={contract.address}>
                       <div className="ml-2">
                         <img src={getImageOfLogoUsingChainId(contract.nonverifiedon[0])} className="h-5 w-5"/>
                       </div>

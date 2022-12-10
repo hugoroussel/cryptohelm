@@ -2,24 +2,24 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, CheckBadgeIcon, MagnifyingGlassIcon, ExclamationCircleIcon, ShieldExclamationIcon, BoltSlashIcon, BoltIcon} from '@heroicons/react/20/solid';
+import { SignalSlashIcon, CheckBadgeIcon, MagnifyingGlassIcon, ShieldExclamationIcon} from '@heroicons/react/20/solid';
 import {ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection} from './structs';
 import NewPage from './Tokens';
 import Header from './Header';
 import Contracts from './Contracts';
 import unverifiedPlaceholder from './unverifiedcontracts.json';
-import fs from 'fs';
+import blocksGif from './blocks.gif';
 
 function getAddresses() {
   const addressesFound: string[] = [];
-  const title = document.getElementsByTagName('script');
-  console.log('title', title);
+  const scripts = document.getElementsByTagName('script');
+  console.log('scripts', scripts);
   // remove if the script is from argent 
-  for (let i = 0; i < title.length; i++) {
-    if (title[i].id.includes('argent-x-extension')) {
+  for (let i = 0; i < scripts.length; i++) {
+    if (scripts[i].id.includes('argent-x-extension')) {
       continue;
     }
-    fetch(title[i].src)
+    fetch(scripts[i].src)
       .then((response) => response.text())
       .then((text) => {
         const regex = /0x[a-fA-F0-9]{40}/g;
@@ -45,8 +45,13 @@ function getAddresses() {
 }
 
 
+// etherscan light blue #3498db
+// etherscan dark gray #979695
+// etherscan dark blue #21325b
+
 function App() {
 
+  const [loading, setLoading] = useState<boolean>(false);
   const [tabData, setTabData] = useState<TabData| null>({favIconUrl: 'https://static.debank.com/image/matic_nft/local_url/5df849b06af0e9ea7bcbb8c1804304a4/59211315b16c0553e7e63bb5f536d37e.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [showStart, setShowStart] = useState<boolean>(false);
@@ -63,7 +68,6 @@ function App() {
   const [others, setOthers] = useState<string[]>([]);
   const [nonVerified, setNonVerified] = useState<AddressCollection[]>([]);
 
-  // define an empty chrome tab
   const nullTab: chrome.tabs.Tab = {
     active: false,
     audible: false,
@@ -72,9 +76,13 @@ function App() {
     favIconUrl: '',
     height: 0,
     id: 0,} as chrome.tabs.Tab;
-  const [activeTab, setActiveTabId] = useState<chrome.tabs.Tab>(nullTab);
+  // const [activeTab, setActiveTab] = useState<chrome.tabs.Tab>(nullTab);
 
-  useEffect(() => {
+
+  function refreshData(at: chrome.tabs.Tab){
+    console.log('refreshing message data');
+    const activeTab = at;
+    console.log('activeTab (found in react state)', activeTab);
     if(activeTab.id === 0) {
       return;
     }
@@ -83,7 +91,7 @@ function App() {
     setTabData(newTabData);
     chrome.scripting.executeScript(
       {
-        target: {tabId: activeTab!.id!},
+        target: {tabId: activeTab.id || 0},
         func: getAddresses,
       },
       () => {
@@ -93,6 +101,7 @@ function App() {
     let messagesArray = messages?.split(',') as string[];
     if (messagesArray[0] === '') {
       messagesArray = [];
+      setLoading(false);
     }
     async function runAnalysis() {
       if (messagesArray.length === 0) {
@@ -106,36 +115,48 @@ function App() {
       setNftTokens(res.data.nfts);
       setOthers(res.data.others);
       setIndexingNecessary(res.data.indexingNecessary);
-      console.log(res.data);
       setNonVerified(res.data.nonVerifiedContracts);
+      setLoading(false);
     }
     runAnalysis();
+  }
+
+  /*
+  useEffect(() => {
+    refreshData();
   }, [activeTab]);
+  */
+
+  async function livenessCheck() {
+    const res = await axios.get(`${process.env.REACT_APP_SERVER_URL}/ping`);
+    if (res.data === 'Server is running') {
+      setServerLive(true);
+    }
+    console.log('livenesscheck', res.data);
+  }
 
   useEffect(() => {
-
-    // read the unverified contracts from local file
-
+    console.log('useEffect triggered');
     const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
     setNonVerified(placeHolderData);
 
-    
 
-    async function livenessCheck() {
-      const res = await axios.get(`${process.env.REACT_APP_SERVER_URL}/ping`);
-      if (res.data === 'Server is running') {
-        setServerLive(true);
-      }
-      console.log('livenesscheck', res.data);
-    }
+
+    setLoading(false);
     livenessCheck();
+    
     chrome.tabs && chrome.tabs.query({
     }, (tabs) => {
       const activeTab = tabs.find((tab) => tab.active);
       if (activeTab) {
-        setActiveTabId(activeTab);
+        console.log('activeTab', activeTab);
+        // setActiveTab(activeTab);
+        refreshData(activeTab);
+      }else{
+        console.log('no active tab');
       }
     });
+    /*
     setInterval(() => {
       chrome.tabs && chrome.tabs.query({
       }, (tabs) => {
@@ -147,7 +168,8 @@ function App() {
           setActiveTabId(at);
         } 
       });
-    }, 500);
+    }, 100);
+    */
   }, []);
 
   const erc20PageProps: ERC20sPageProps = {
@@ -170,7 +192,6 @@ function App() {
     setShowContracts: setShowUnverifiedContracts,
   };
 
-  // etherscan light blue #3498db
 
   return (
     <>
@@ -189,62 +210,65 @@ function App() {
             </div>
           </div>
 
-          <div/>
 
           <div className="py-2 border-solid border-[#21325b] border-[0.5px] rounded-sm hover:bg-gray-200" onClick={(e)=>{e.preventDefault();setShowStart(!showStart);}}>
-            {activeAddresses.length > 0 && !indexingNecessary && 
-          <>
-            <div className='ml-5 flex items-center font-semibold text-lg'>
-              <CheckBadgeIcon className="h-8 w-8 m-2 text-blue-500 inline" aria-hidden="true" />
-              <div className="text-lg font-semibold">
+            {loading && 
+            <div className="flex justify-center">
+              <img src={blocksGif} className='h-20 w-20'/>
+            </div>}
+            {!loading && activeAddresses.length > 0 && !indexingNecessary && 
+            <>
+              <div className='ml-5 flex items-center font-semibold text-lg'>
+                <CheckBadgeIcon className="h-8 w-8 m-2 text-blue-500 inline" aria-hidden="true" />
+                <div className="text-lg font-semibold">
               Found {activeAddresses.length} verified contracts
+                </div>
               </div>
-            </div>
-            <div className='ml-5 flex items-center text-md font-semibold text-lg'>
-              <ShieldExclamationIcon className="h-8 w-8 m-2 text-red-500 inline" aria-hidden="true" />
-              <div className="text-lg font-semibold">
+              <div className='ml-5 flex items-center text-md font-semibold text-lg'>
+                <ShieldExclamationIcon className="h-8 w-8 m-2 text-red-500 inline" aria-hidden="true" />
+                <div className="text-lg font-semibold">
               Found {nonVerified?.length} unverified contracts
+                </div>
               </div>
-            </div>
-          </>
+            </>
             }
-            {activeAddresses.length > 0 && indexingNecessary && 
-          <div className='ml-5 flex items-center'>
-            <MagnifyingGlassIcon className="m-1 h-8 w-8 text-red-800 inline" aria-hidden="true" />
-            <div className="text-lg font-semibold">
-              Indexing.. Please wait a few minutes and refresh.
-            </div>
-          </div>
-            }
-            {activeAddresses.length == 0 && 
-          <>
-            <div className='flex items-center ml-7'>
-              <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
+            { !loading && activeAddresses.length > 0 && indexingNecessary && 
+            <div className='ml-5 flex items-center'>
+              <MagnifyingGlassIcon className="m-1 h-8 w-8 text-red-800 inline" aria-hidden="true" />
               <div className="text-lg font-semibold">
-                No addresses detected
+              Indexing.. Please wait a few minutes and refresh.
               </div>
             </div>
-          </>
+            }
+            {!loading && activeAddresses.length == 0 && 
+            <>
+              <div className='flex items-center ml-7'>
+                <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
+                <div className="text-lg font-semibold">
+                No addresses detected
+                </div>
+              </div>
+            </>
             }
           </div>
 
           <div className='text-center my-2 mx-2'>
             <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
-              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
-                <dt className="text-xs text-gray-100">Unverified Contracts</dt>
-                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{nonVerified.length}</dd>
+              <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
+                <dt className="text-xs text-blue-500">Unverified Contracts</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{nonVerified.length}</dd>
               </div>
-              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
-                <dt className="text-xs text-gray-100">Verified ERC20s</dt>
-                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{activeTokens.length}</dd>
+              <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
+                <dt className="text-xs text-blue-500">Verified ERC20s</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{activeTokens.length}</dd>
               </div>
-              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
-                <dt className="text-xs text-gray-100">NFT addresses</dt>
-                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{nftTokens.length}</dd>
+              <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
+                <dt className="text-xs text-blue-500">NFT addresses</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{nftTokens.length}</dd>
               </div>
-              <div className="rounded-lg bg-[#21325b] px-4 py-5 shadow sm:p-6 hover:bg-gray-800" onClick={(e)=>{e.preventDefault();}}>
-                <dt className="text-xs text-gray-100">Other Addresses</dt>
-                <dd className="mt-1 text-sm font-semibold tracking-tight text-gray-300">{others.length}</dd>
+              <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();}}>
+                <dt className="text-xs text-blue-500">Other Addresses</dt>
+                <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{others.length}</dd>
               </div>
             </dl>
           </div>
