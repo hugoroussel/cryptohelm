@@ -62,7 +62,7 @@ function App() {
 
   const [analysisDone, setAnalysisDone] = useState<boolean>(false);
 
-  const [percent, setPercent] = useState<number>(50);
+  const [percent, setPercent] = useState<number>(100);
   const [pgColor, setPgColor] = useState<string>('#3498db');
 
 
@@ -221,17 +221,17 @@ function App() {
             Connected to: <a className="text-blue-400" href={tabData?.url} target="_blank" rel="noreferrer">{tabData?.url}</a>
             </div>
           </div>
-          { !analysisDone && !loading &&
+          {!analysisDone && !loading &&
           <div className='grid grid-cols-3 py-2'>
             <div></div>
-            <div className="ml-2.5">
+            <div className="ml-1">
               <button
                 type="button"
-                className="inline-flex items-center rounded-3xl border border-transparent bg-green-700 px-4 py-3 text-lg font-semibold leading-4 text-white shadow-sm hover:bg-green-400 focus:ring-green-400"
+                className="text-2xl inline-flex items-center rounded-full border border-transparent bg-green-600 p-3 text-white shadow-sm hover:bg-green-700"
                 onClick={(e) => {e.preventDefault(); runScan();}}
               >
                 Scan
-                <MagnifyingGlassIcon className="ml-2 h-4 w-4" aria-hidden="true" />
+                <MagnifyingGlassIcon className="ml-2 h-6 w-6" aria-hidden="true"/>
               </button>
             </div>
             <div></div>
@@ -252,30 +252,26 @@ function App() {
             </div>
           </>
           }
-          {/*!noAddressDetected && analysisDone && ! */}
+          {/*!noAddressDetected && analysisDone && !loading */}
           {!noAddressDetected && analysisDone && !loading && 
-          <div className="grid grid-cols-3">{/* Content goes here */}
-            <div>
-              <Circle className='h-[80px] w-[80px] mx-1' percent={percent} strokeWidth={10} strokeColor={pgColor} trailWidth={3} strokeLinecap="square"/>
+          <div className="grid grid-cols-3 gap-0">{/* Content goes here */}
+            <div className='flex pl-5'>
+              <Circle className='absolute h-[80px] w-[80px] mx-1' percent={percent} strokeWidth={9} strokeColor={pgColor} trailWidth={0.01} strokeLinecap="round"/>
+              <div className="pl-[22px] pt-[25.5px] z-10 font-bold text-lg" color='red'>
+                {percent.toFixed(0)}%
+              </div>
             </div>
-            <div className='text-sm font-semibold col-span-2 py-1'>
-              {percent.toFixed(0)}% Verified Contracts
-              <br/>
-              Found {unverifiedContracts?.length} Unverified Contracts
-              <br/>
-              Over {unverifiedContracts.length+verifiedContracts.length} Contracts
-              <br/>
-              <button
-                type="button"
-                className="my-1 inline-flex items-center rounded border border-transparent bg-indigo-100 px-1 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-200 "
+            <div className='text-lg font-semibold col-span-2 pt-6'>
+              verified over {unverifiedContracts.length+verifiedContracts.length} contracts analysed.
+              <div
+                className='text-blue-700 cursor-pointer underline text-sm py-3 font-bold'
                 onClick={(e) => {e.preventDefault(); setRevealDetailedAnalysis(!revealDetailedAnalysis);}}
               >
                 {!revealDetailedAnalysis? ('Reveal') : ('Hide')} detailed analysis
-              </button>
+              </div>
             </div>
           </div>
           }
-
           {revealDetailedAnalysis && !noAddressDetected && analysisDone && !loading && 
             <div className='text-center my-2 mx-2'>
               <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
