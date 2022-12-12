@@ -19,6 +19,9 @@
   "permissions": [
     "activeTab", "scripting"
   ],
+  "externally_connectable": {
+      "matches": ["*://*/*"]
+  },
   "content_scripts": [
     {
         "matches": ["http://*/*", "https://*/*"],

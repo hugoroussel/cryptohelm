@@ -13,38 +13,15 @@ import { Circle } from 'rc-progress';
 import {percentToColor} from './helpers';
 import ERC20s from './Tokens';
 
+
 function getAddresses() {
-  const addressesFound: string[] = [];
   const scripts = document.getElementsByTagName('script');
   console.log('scripts', scripts);
-  // remove if the script is from argent 
+  const sources = [] as string[];
   for (let i = 0; i < scripts.length; i++) {
-    if (scripts[i].id.includes('argent-x-extension')) {
-      continue;
-    }
-    fetch(scripts[i].src)
-      .then((response) => response.text())
-      .then((text) => {
-        const regex = /0x[a-fA-F0-9]{40}/g;
-        const found = text.match(regex);
-        if (found) {
-          found.forEach((address) => addressesFound.push(address));
-        }
-      }
-      ).then(
-        () => {
-          const uniqueAddresses = new Set();
-          addressesFound.forEach((address) => {
-            uniqueAddresses.add(address);
-          });
-          uniqueAddresses.delete('0x0000000000000000000000000000000000000000');
-          uniqueAddresses.delete('0xffffffffffffffffffffffffffffffffffffffff');
-          uniqueAddresses.delete('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-          uniqueAddresses.delete('0x1000000000000000000000000000000000000000');
-          chrome.runtime.sendMessage({addresses: Array.from(uniqueAddresses.values())});
-        }
-      );
+    sources.push(scripts[i].src);
   }
+  chrome.runtime.sendMessage({scripts: sources});
 }
 
 
@@ -64,6 +41,7 @@ function App() {
 
   const [percent, setPercent] = useState<number>(100);
   const [pgColor, setPgColor] = useState<string>('#3498db');
+
 
 
   const [verifiedERC20s, setVerifiedERC20s] = useState<TokenListToken[]>([]);
@@ -94,19 +72,18 @@ function App() {
 
 
   function refreshTabData(at: chrome.tabs.Tab){
-    console.log('refreshing message data');
     const activeTab = at;
-    console.log('activeTab (found in react state)', activeTab);
+    // console.log('activeTab (found in react state)', activeTab);
     if(activeTab.id === 0) {
       return;
     }
     const urlCleaned = activeTab?.url?.split('/').slice(0, 3).join('/');
     const newTabData = {favIconUrl: activeTab?.favIconUrl, title: activeTab?.title, url: urlCleaned} as TabData;
     setTabData(newTabData);
-
   }
 
   function runScan(){
+    console.log('runScan() called');
     setLoading(true);
     chrome.scripting.executeScript(
       {
@@ -114,38 +91,70 @@ function App() {
         func: getAddresses,
       },
       () => {
-        // console.log('script executed);
+        // 
       });
-    const messages = localStorage.getItem('messages');
-    let messagesArray = messages?.split(',') as string[];
-    if (messagesArray[0] === '') {
-      messagesArray = [];
-      setLoading(false);
-      setLoading(false);
-      setAnalysisDone(true);
-    }
-    async function runAnalysis() {
-      if (messagesArray.length === 0) {
-        setActiveAddresses([]);
-        setNoAddressDetected(true);
-        return;
+    chrome.runtime.onMessage.addListener(
+      function(request, sender) {
+        console.log('sender object:', sender);
+        // console.log('messages received', request.noAddressDetected);
+        console.log('scripts', request.scripts);
+        readAllScripts(request.scripts);
       }
-      const data = {addresses: messagesArray};
+    );
+  }
+
+  function readAllScripts(scripts: string[]){
+    console.log('readAllScripts() called', scripts.length);
+    console.log('readAllScripts() called', scripts[0]);
+    const addressesFound: string[] = [];
+    async function fetchReadAndFindAddresses(scripts: string[]){
+      for(let i=0; i < scripts.length; i++){
+        // skip script if it comes from a chrome extension
+        if(scripts[i].includes('chrome-extension')){
+          continue;
+        }
+        console.log('script', scripts[i]);
+        const response = await fetch(scripts[i]);
+        const text = await response.text();
+        const found = text.match(/0x[a-fA-F0-9]{40}/g);
+        if (found !== null) {
+          addressesFound.push(...found);
+        }
+      }
+      const uniqueAddresses = new Set(addressesFound);
+      uniqueAddresses.delete('0x0000000000000000000000000000000000000000');
+      uniqueAddresses.delete('0xffffffffffffffffffffffffffffffffffffffff');
+      uniqueAddresses.delete('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+      uniqueAddresses.delete('0x1000000000000000000000000000000000000000');
+      const uniqueAddressesArray = Array.from(uniqueAddresses.values());
+      console.log('uniqueAddresses', uniqueAddressesArray.length);
+      runAnalysis(uniqueAddressesArray);
+    }
+    fetchReadAndFindAddresses(scripts);
+  }
+
+  function runAnalysis(addresses : string[]){
+    if (addresses.length === 0) {
+      console.log('no addresses detected!');
+      setLoading(false);
+      setNoAddressDetected(true);
+      setAnalysisDone(true);
+      return;
+    }
+    async function callServer(addresses : string[]) {
+      const data = {addresses: addresses};
       const res = await axios.post(`${process.env.REACT_APP_SERVER_URL}/analyze`, data);
-      console.log('received addresses', res.data);
-      console.log('received unverified contracts length', res.data.unverifiedContracts.length);
-      console.log('received verified contracts length', res.data.verifiedContracts.length);
+      // console.log('received addresses', res.data);
       setUnverifiedContracts(res.data.unverifiedContracts);
       setVerifiedContracts(res.data.verifiedContracts);
       setVerifiedERC20s(res.data.verifiedERC20s);
       const p = (1-(res.data.unverifiedContracts.length / (res.data.verifiedContracts.length + res.data.unverifiedContracts.length)))*100;
-      console.log('p', p);
       setPercent(p);
       setPgColor(percentToColor(p));
       setLoading(false);
       setAnalysisDone(true);
     }
-    runAnalysis();
+    callServer(addresses);
   }
 
   async function livenessCheck() {
@@ -153,7 +162,6 @@ function App() {
     if (res.data === 'Server is running') {
       setServerLive(true);
     }
-    console.log('livenesscheck', res.data);
   }
 
   useEffect(() => {
@@ -172,18 +180,6 @@ function App() {
         console.log('no active tab');
       }
     });
-    /*setInterval(() => {
-      chrome.tabs && chrome.tabs.query({
-      }, (tabs) => {
-        const at = tabs.find((tab) => tab.active) as chrome.tabs.Tab;
-        const activeTabId = localStorage.getItem('activeTab');
-        const activeTabIdParsed = JSON.parse(activeTabId as string) as chrome.tabs.Tab;
-        if(activeTabIdParsed?.id !== at.id || activeTabIdParsed === null) {
-          localStorage.setItem('activeTab', JSON.stringify(at));
-          setActiveTabId(at);
-        } 
-      });
-    }, 100);*/
   }, []);
 
   const erc20PageProps: ERC20sPageProps = {
@@ -205,7 +201,6 @@ function App() {
     showContracts: showUnverifiedContracts,
     setShowContracts: setShowUnverifiedContracts,
   };
-
 
   return (
     <>
@@ -294,10 +289,6 @@ function App() {
               </dl>
             </div>
           }
-          
-          
-          
-
           {/*{!loading && activeAddresses.length > 0 && !indexingNecessary && 
             <>
               <div className='ml-5 flex items-center font-semibold text-lg'>
@@ -325,16 +316,12 @@ function App() {
           </div>
           <hr/>
         */}
-
           <div className='pl-1 py-1 text-center text-xs font-light'>
           Metascan all rights reserved.
-          </div>
-           
+          </div>     
         </body>
       }
     </>
-
   );
 }
-
 export default App;
