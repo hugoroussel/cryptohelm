@@ -10,7 +10,7 @@ export interface AddressCollection {
     lastUpdated: number;
     isContract: boolean;
     existsOn : number[];
-    verifiedOn: number[];
+    verifiedon: number[];
     nonverifiedon: number[];
 }
 

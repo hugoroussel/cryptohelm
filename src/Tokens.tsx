@@ -1,23 +1,27 @@
 import React from 'react';
 import {ERC20sPageProps, TokenListToken} from './structs';
-import {ArrowTopRightOnSquareIcon, XMarkIcon} from '@heroicons/react/20/solid';
+import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
 import Header from './Header';
+import {returnBlockchainExplorerLinkWithChainId } from './helpers';
 
 
-function returnLinkToBlockExplorer(token: TokenListToken) {
-  switch (token.chainId) {
-  case 1:
-    return `https://etherscan.io/token/${token.address}`;
-  case 3:
-    return `https://ropsten.etherscan.io/token/${token.address}`;
-  }
+function saveToJsonAndDownload(erc20s: TokenListToken[]){
+  const json = JSON.stringify(erc20s);
+  const blob = new Blob([json], {type: 'application/json'});
+  const href = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = 'erc20s.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function ERC20s(pageProps: ERC20sPageProps) {
 
   return (
     <>
-      <body className='w-[340px] h-[450px] bg-white'>
+      <body className='w-[340px] h-[450px] bg-gray-50'>
         <Header/>
         <div className="lg:-mx-8">
           <div className="lg:px-8">
@@ -25,7 +29,9 @@ function ERC20s(pageProps: ERC20sPageProps) {
               <table className="min-w-full divide-y divide-gray-300 table-auto">
                 <thead className="">
                   <div className="grid grid-cols-7 items-center my-2">
-                    <div></div>
+                    <div>
+                      <ArrowDownTrayIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();saveToJsonAndDownload(pageProps.erc20s);}}/>
+                    </div>
                     <div></div>
                     <div className="ml-7 text-lg flex col-span-3 text-center text-gray-600 font-semibold">{pageProps.erc20s.length} tokens</div>
                     <div></div>
@@ -34,7 +40,7 @@ function ERC20s(pageProps: ERC20sPageProps) {
                     </div>
                   </div>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white ">
+                <tbody className="divide-y divide-gray-200 bg-gray-50">
                   {pageProps.erc20s.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No tokens found :(</div>}
                   {pageProps.erc20s.map((token) => (
                     <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={token.address}>
@@ -45,7 +51,7 @@ function ERC20s(pageProps: ERC20sPageProps) {
                         {token.name.length > 20 ? token.name.substring(0, 20) + '...' : token.name}
                       </div>
                       <div>
-                        <ArrowTopRightOnSquareIcon className='h-5 w-5 ml-2 hover:text-blue-500' onClick={(e)=>{e.preventDefault(),window.open(returnLinkToBlockExplorer(token), '_blank');}}/>
+                        <ArrowTopRightOnSquareIcon className='h-5 w-5 ml-2 hover:text-blue-500' onClick={(e)=>{e.preventDefault(),window.open(returnBlockchainExplorerLinkWithChainId(token.chainId)+'/token/'+token.address, '_blank');}}/>
                       </div>
                     </div>
                   ))}
