@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { BoltSlashIcon, BoltIcon, InformationCircleIcon} from '@heroicons/react/20/solid';
 import {QuestionMarkCircleIcon} from '@heroicons/react/24/outline';
 import axios from 'axios';
-import logo from './logo192.png';
+import { TabData } from './structs';
 
-function Header(){
+function Header(pageProps :TabData){
 
   const [serverLive, setServerLive] = React.useState<boolean>(false);
 
@@ -21,11 +21,10 @@ function Header(){
 
   return(
     <div className="bg-slate-50 h-[60px] grid grid-cols-4 gap-8 rounded-sm">
-      <div className="">
-      </div>
+      <div className="text-xs col-span-3 flex">
 
-      <div className="col-span-2 align-middle ml-12">
-        <img src={logo} className='h-12 w-12 ml-1 mt-2'/>
+        <img src={pageProps.favIconUrl} className="h-6 w-6 ml-3 mt-1"/> 
+        <span className="font-bold ml-1 mt-2 text-blue-500">{pageProps.url} </span>
       </div>
 
       <div className="flex justify-end">

@@ -13,6 +13,7 @@ import blocksGif from './blocks.gif';
 import { Circle } from 'rc-progress';
 import {percentToColor} from './helpers';
 import unverifiedPlaceholder from './unverifiedcontracts.json';
+import logo from './logo192.png';
 
 function getAddresses() {
   const scripts = document.getElementsByTagName('script');
@@ -28,8 +29,8 @@ function getAddresses() {
 // etherscan dark blue #21325b
 
 function App() {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [tabData, setTabData] = useState<TabData| null>({favIconUrl: 'https://i.imgur.com/8RetlRE.png', title: '', url: 'unknown'});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/8RetlRE.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [noAddressDetected, setNoAddressDetected] = useState<boolean>(false);
 
@@ -39,13 +40,14 @@ function App() {
   const [pgColor, setPgColor] = useState<string>('#3498db');
 
 
-  // Page display
+  // Pages
   const [showUnverifiedContracts, setShowUnverifiedContracts] = useState<boolean>(false);
   const [showTokens, setShowTokens] = useState<boolean>(false);
   const [showNfts, setShowNfts] = useState<boolean>(false);
   const [showVerifiedContracts, setShowVerifiedContracts] = useState<boolean>(false);
 
   // Data states
+  const [allAddressesOfPage, setAllAddresesOfPage] = useState<string[]>([]);
   const [verifiedERC20s, setVerifiedERC20s] = useState<TokenListToken[]>([]);
 
 
@@ -78,11 +80,29 @@ function App() {
     const urlCleaned = activeTab?.url?.split('/').slice(0, 3).join('/');
     const newTabData = {favIconUrl: activeTab?.favIconUrl, title: activeTab?.title, url: urlCleaned} as TabData;
     setTabData(newTabData);
+   
   }
 
   function runScan(){
-    console.log('runScan() called');
+    console.log('running scan...');
     setLoading(true);
+    runAnalysis(allAddressesOfPage);
+  }
+
+  useEffect(() => {
+    getInjectedAddresses();
+  }, [tabData]);
+
+
+  useEffect(() => {
+    runScan();
+  }, [allAddressesOfPage]);
+
+
+  function getInjectedAddresses(){
+    if(activeTab.id === 0) {
+      return;
+    }
     chrome.scripting.executeScript(
       {
         target: {tabId: activeTab.id || 0},
@@ -96,9 +116,11 @@ function App() {
         readAllScripts(request.scripts);
       }
     );
+
   }
 
   function readAllScripts(scripts: string[]){
+    console.log('reading scripts of page to detect addresses...');
     const addressesFound: string[] = [];
     async function fetchReadAndFindAddresses(scripts: string[]){
       for(let i=0; i < scripts.length; i++){
@@ -121,12 +143,13 @@ function App() {
       uniqueAddresses.delete('0x1000000000000000000000000000000000000000');
       const uniqueAddressesArray = Array.from(uniqueAddresses.values());
       console.log('uniqueAddresses', uniqueAddressesArray.length);
-      runAnalysis(uniqueAddressesArray);
+      setAllAddresesOfPage(uniqueAddressesArray );
     }
     fetchReadAndFindAddresses(scripts);
   }
 
   function runAnalysis(addresses : string[]){
+    console.log('running analysis...');
     if (addresses.length === 0) {
       console.log('no addresses detected!');
       setLoading(false);
@@ -134,6 +157,7 @@ function App() {
       setAnalysisDone(true);
       return;
     }
+    console.log('running analysis with addresses', addresses.length);
     async function callServer(addresses : string[]) {
       const data = {addresses: addresses};
       const res = await axios.post(`${process.env.REACT_APP_SERVER_URL}/analyze`, data);
@@ -146,6 +170,7 @@ function App() {
       setPgColor(percentToColor(p));
       setLoading(false);
       setAnalysisDone(true);
+      console.log('analysis done', loading, analysisDone);
     }
     callServer(addresses);
   }
@@ -158,8 +183,18 @@ function App() {
   }
 
   useEffect(() => {
-    // const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
+    /*
+    //const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
     // setNonVerified(placeHolderData);
+    async function tokenlistPlaceholder(){
+      // get the 1inch tokenlist
+      const res = await axios.get('https://tokens.1inch.eth.link');
+      const tokens = res.data.tokens;
+      setVerifiedERC20s(tokens);
+    }
+    tokenlistPlaceholder();
+    */
+    
     livenessCheck();
     chrome.tabs && chrome.tabs.query({
     }, (tabs) => {
@@ -179,6 +214,7 @@ function App() {
     setShowTokens: setShowTokens,
     serverLive: serverLive,
     erc20s: verifiedERC20s,
+    tabData: tabData,
   };
 
   const nftsPageProps: ERC20sPageProps = {
@@ -186,18 +222,21 @@ function App() {
     setShowTokens: setShowNfts,
     serverLive: serverLive,
     erc20s: nftTokens,
+    tabData: tabData,
   };
 
   const unverifiedContractPageProps : ContractsPageProps = {
     contracts: unverifiedContracts,
     showContracts: showUnverifiedContracts,
     setShowContracts: setShowUnverifiedContracts,
+    tabData: tabData,
   };
 
   const verifiedContractPageProps : ContractsPageProps = {
     contracts: verifiedContracts,
     showContracts: showVerifiedContracts,
     setShowContracts: setShowVerifiedContracts,
+    tabData: tabData,
   };
 
   return (
@@ -208,35 +247,22 @@ function App() {
       {showVerifiedContracts && <VerifiedContracts {...verifiedContractPageProps}/>}
       {!showVerifiedContracts && !showUnverifiedContracts && !showNfts &&!showTokens &&
         <body className='w-[340px] bg-slate-50'>
-          <Header/>
-          <div className='py-2'>
-            <img src={tabData?.favIconUrl} alt="favicon" className='w-10 h-10 container'/>
-            <div className="text-sm text-gray text-center py-2">
-            Connected to: <br/><a className="text-blue-400" href={tabData?.url} target="_blank" rel="noreferrer">{tabData?.url}</a>
+          <Header {...tabData}/>
+          {
+            <div className='grid grid-cols-3 pb-2'>
+              <div></div>
+              <div className="">
+                <img src={logo} className='h-[90px] w-[80px] container mb-6'/>
+              </div>
+              <div></div>
             </div>
-          </div>
-          {!analysisDone && !loading &&
-          <div className='grid grid-cols-3 pb-5'>
-            <div></div>
-            <div className="">
-              <button
-                type="button"
-                className="text-2xl inline-flex items-center rounded-full border border-transparent bg-green-600 p-3 text-white shadow-sm hover:bg-green-700"
-                onClick={(e) => {e.preventDefault(); runScan();}}
-              >
-                Scan
-                <MagnifyingGlassIcon className="ml-2 h-6 w-6" aria-hidden="true"/>
-              </button>
-            </div>
-            <div></div>
-          </div>
           }
           {loading && 
             <div className="flex justify-center pb-2">
               <img src={blocksGif} className='h-20 w-20'/>
             </div>
           }
-          {noAddressDetected && analysisDone && !loading && 
+          { !loading && allAddressesOfPage.length == 0 &&
           <>
             <div className='flex items-center ml-7'>
               <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
@@ -246,8 +272,10 @@ function App() {
             </div>
           </>
           }
-          {/*!noAddressDetected && analysisDone && !loading */}
-          {!noAddressDetected && analysisDone && !loading && 
+          {/*
+          allAddressesOfPage.length !== 0 && analysisDone && !loading && 
+          */}
+          {allAddressesOfPage.length !== 0 && analysisDone && !loading && 
           <>
             <div className="grid grid-cols-3 gap-0 pb-5">
               <div></div>
@@ -277,7 +305,7 @@ function App() {
                 {unverifiedContracts.length > 0 &&
                 <div className="rounded-md bg-red-200 border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-red-100 hover:border-[0.5px] hover:border-red-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
                   <dt className="text-xs text-red-500">Unverified Contracts</dt>
-                  <dd className="mt-1 text-sm font-semibold tracking-tight text-red-500">{unverifiedContracts.length}</dd>
+                  <dd className="mt-1 text-sm font-bold tracking-tight text-red-500">{unverifiedContracts.length}</dd>
                 </div>
                 }
                 {verifiedContracts.length > 0 &&
@@ -289,6 +317,13 @@ function App() {
                 <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
                   <dt className="text-xs text-blue-500">Verified ERC20s</dt>
                   <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{verifiedERC20s.length}</dd>
+                  <div className='flex'>
+                    {/*
+                      verifiedERC20s.slice(8,15).map((token) => {
+                        return (
+                          <img src={token.logoURI} className="w-3 h-3 mr-0.5" key={token.address}/>);
+                        })*/}
+                  </div>     
                 </div>
                 {nftTokens.length > 0 &&
                 <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>

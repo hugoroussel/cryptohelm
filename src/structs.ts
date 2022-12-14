@@ -2,6 +2,7 @@ export interface ContractsPageProps {
     contracts: AddressCollection[];
     showContracts: boolean;
     setShowContracts: React.Dispatch<React.SetStateAction<boolean>>;
+    tabData : TabData;
 }
 
 export interface AddressCollection {
@@ -12,6 +13,7 @@ export interface AddressCollection {
     existsOn : number[];
     verifiedon: number[];
     nonverifiedon: number[];
+    tabData : TabData;
 }
 
 export interface ERC20sPageProps {
@@ -19,6 +21,7 @@ export interface ERC20sPageProps {
     setShowTokens: React.Dispatch<React.SetStateAction<boolean>>;
     serverLive: boolean;
     erc20s: TokenListToken[];
+    tabData : TabData;
 }
 
 export interface TabData {
@@ -34,4 +37,8 @@ export interface TokenListToken {
     symbol: string;
     decimals: number;
     logoURI: string;
+}
+
+export interface HeaderProps{
+    tabData: TabData;
 }

@@ -32,7 +32,7 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
   return (
     <>
       <body className='w-[340px] h-[450px] bg-gray-50'>
-        <Header/>
+        <Header {...pageProps.tabData}/>
         <div className="lg:-mx-8">
           <div className="lg:px-8">
             <div className="overflow-hidden">

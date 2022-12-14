@@ -2,7 +2,7 @@ import React from 'react';
 import {ERC20sPageProps, TokenListToken} from './structs';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
 import Header from './Header';
-import {returnBlockchainExplorerLinkWithChainId } from './helpers';
+import {getImageOfLogoUsingChainId, returnBlockchainExplorerLinkWithChainId } from './helpers';
 
 
 function saveToJsonAndDownload(erc20s: TokenListToken[]){
@@ -22,7 +22,7 @@ function ERC20s(pageProps: ERC20sPageProps) {
   return (
     <>
       <body className='w-[340px] h-[450px] bg-gray-50'>
-        <Header/>
+        <Header {...pageProps.tabData}/>
         <div className="lg:-mx-8">
           <div className="lg:px-8">
             <div className="overflow-hidden">
@@ -44,8 +44,9 @@ function ERC20s(pageProps: ERC20sPageProps) {
                   {pageProps.erc20s.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No tokens found :(</div>}
                   {pageProps.erc20s.map((token) => (
                     <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={token.address}>
-                      <div className="ml-2">
+                      <div className="ml-2 flex">
                         <img src={token.logoURI} className="h-5 w-5"/>
+                        <img src={getImageOfLogoUsingChainId(token.chainId)} className="h-5 w-5 ml-0.5"/>
                       </div>
                       <div className="ml-7 text-lg mt-1 col-span-5 text-center">
                         {token.name.length > 20 ? token.name.substring(0, 20) + '...' : token.name}
