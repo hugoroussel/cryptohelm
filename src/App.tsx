@@ -2,34 +2,51 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, MagnifyingGlassIcon} from '@heroicons/react/20/solid';
+import { SignalSlashIcon, ExclamationTriangleIcon} from '@heroicons/react/20/solid';
 import {ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection} from './structs';
-import NewPage from './Tokens';
+import Tokens from './Tokens';
 import Header from './Header';
 import UnverifiedContracts from './UnverifiedContracts';
 import VerifiedContracts from './VerifiedContracts';
-import Contracts from './UnverifiedContracts';
+import EOAs from './EOAs';
 import blocksGif from './blocks.gif';
 import { Circle } from 'rc-progress';
-import {percentToColor} from './helpers';
+import {percentToColor, getChainsWithUnverifiedContracts,getImageOfLogoUsingChainId, getNameOfChainWithChainId} from './helpers';
 import unverifiedPlaceholder from './unverifiedcontracts.json';
 import logo from './logo192.png';
 
 function getAddresses() {
+  // get the inner html of the page
+  const html = document.documentElement.innerHTML;
+  console.log('html', html.length);
+  const addressesFound: string[]= [];
+  // find addresses in the inner html of the page
+  const found = html.match(/0x[a-fA-F0-9]{40}/g);
+  if (found !== null) {
+    for (let i = 0; i < found.length; i++) {
+      console.log('found address', found[i]);
+      addressesFound.push(found[i]);
+    }
+  }
+  const uniqueAddresses = new Set(addressesFound);
+  const uniqueAddressesArray = Array.from(uniqueAddresses.values());
+  console.log('found ', uniqueAddressesArray.length, ' addresses on the page');
+  
   const scripts = document.getElementsByTagName('script');
   const sources = [] as string[];
-  for (let i = 0; i < scripts.length; i++) {
-    sources.push(scripts[i].src);
+  if (scripts !== undefined) {
+    console.log('found ', scripts.length, ' scripts on the page');
+    for (let i = 0; i < scripts.length; i++) {
+      sources.push(scripts[i].src);
+    }
   }
-  chrome.runtime.sendMessage({scripts: sources});
-}
 
-// etherscan light blue #3498db
-// etherscan dark gray #979695
-// etherscan dark blue #21325b
+  chrome.runtime.sendMessage({scripts: sources, innerHtmlAddresses: uniqueAddressesArray});
+}
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
+  const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
   const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/8RetlRE.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [noAddressDetected, setNoAddressDetected] = useState<boolean>(false);
@@ -42,20 +59,18 @@ function App() {
 
   // Pages
   const [showUnverifiedContracts, setShowUnverifiedContracts] = useState<boolean>(false);
-  const [showTokens, setShowTokens] = useState<boolean>(false);
-  const [showNfts, setShowNfts] = useState<boolean>(false);
   const [showVerifiedContracts, setShowVerifiedContracts] = useState<boolean>(false);
+  const [showTokens, setShowTokens] = useState<boolean>(false);
+  const [showEOAs, setShowEOAs] = useState<boolean>(false);
+  const [showNfts, setShowNfts] = useState<boolean>(false);
 
   // Data states
   const [allAddressesOfPage, setAllAddresesOfPage] = useState<string[]>([]);
   const [verifiedERC20s, setVerifiedERC20s] = useState<TokenListToken[]>([]);
-
-
-  const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
-  const [showAllAddresses, setShowAllAddresses] = useState<boolean>(false);
-  const [activeAddresses, setActiveAddresses] = useState<string[]>([]);
+  const [amountToIndex, setAmountToIndex] = useState<number>(0);
+  const [others, setOthers] = useState<AddressCollection[]>([]);
   const [nftTokens, setNftTokens] = useState<TokenListToken[]>([]);
-  const [others, setOthers] = useState<string[]>([]);
+  const [chainsWithUnverifiedContracts, setChainsWithUnverifiedContracts] = useState<number[]>([]);
 
   const [unverifiedContracts, setUnverifiedContracts] = useState<AddressCollection[]>([]);
   const [verifiedContracts, setVerifiedContracts] = useState<AddressCollection[]>([]);
@@ -113,10 +128,11 @@ function App() {
       });
     chrome.runtime.onMessage.addListener(
       function(request) {
+        console.log('got message from content script', request);
+        setAllAddresesOfPage(request.innerHtmlAddresses);
         readAllScripts(request.scripts);
       }
     );
-
   }
 
   function readAllScripts(scripts: string[]){
@@ -140,8 +156,10 @@ function App() {
       uniqueAddresses.delete('0x0000000000000000000000000000000000000000');
       uniqueAddresses.delete('0xffffffffffffffffffffffffffffffffffffffff');
       uniqueAddresses.delete('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-      uniqueAddresses.delete('0x1000000000000000000000000000000000000000');
-      const uniqueAddressesArray = Array.from(uniqueAddresses.values());
+      // we do this to have also the addresses of the inner html without duplicates
+      const newArray = Array.from(uniqueAddresses).concat(allAddressesOfPage);
+      const uniqueAddresses2 = new Set(newArray);
+      const uniqueAddressesArray = Array.from(uniqueAddresses2.values());
       console.log('uniqueAddresses', uniqueAddressesArray.length);
       setAllAddresesOfPage(uniqueAddressesArray );
     }
@@ -161,10 +179,27 @@ function App() {
     async function callServer(addresses : string[]) {
       const data = {addresses: addresses};
       const res = await axios.post(`${process.env.REACT_APP_SERVER_URL}/analyze`, data);
-      // console.log('received addresses', res.data);
-      setUnverifiedContracts(res.data.unverifiedContracts);
-      setVerifiedContracts(res.data.verifiedContracts);
-      setVerifiedERC20s(res.data.verifiedERC20s);
+
+      if (res.data.amountToIndex > 0){
+        setAnalysisDone(true);
+        setLoading(false);
+        setIndexingNecessary(true);
+        setAmountToIndex(res.data.amountToIndex);
+        return;
+      }
+      const sortedUnverifiedContracts = res.data.unverifiedContracts.sort((a :AddressCollection, b :AddressCollection) => {
+        return a.unverifiedon[0] - b.unverifiedon[0];
+      });
+      setUnverifiedContracts(sortedUnverifiedContracts);
+      console.log('sortedUnverifiedContracts', sortedUnverifiedContracts);
+      const sortedVerifiedContracts = res.data.verifiedContracts.sort((a: AddressCollection, b :AddressCollection) => b.verifiedon[0] - a.verifiedon[0]);
+      setVerifiedContracts(sortedVerifiedContracts);
+      const sortedTokensByName = res.data.verifiedERC20s.sort((a: TokenListToken, b :TokenListToken) => a.name.localeCompare(b.name));
+      setVerifiedERC20s(sortedTokensByName);
+
+
+      setChainsWithUnverifiedContracts(getChainsWithUnverifiedContracts(res.data.unverifiedContracts));
+      setOthers(res.data.eoas);
       const p = (1-(res.data.unverifiedContracts.length / (res.data.verifiedContracts.length + res.data.unverifiedContracts.length)))*100;
       setPercent(p);
       setPgColor(percentToColor(p));
@@ -184,8 +219,11 @@ function App() {
 
   useEffect(() => {
     /*
-    //const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
-    // setNonVerified(placeHolderData);
+    const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
+    setUnverifiedContracts(placeHolderData);
+    setChainsWithUnverifiedContracts(getChainsWithUnverifiedContracts(placeHolderData));
+    */
+    
     async function tokenlistPlaceholder(){
       // get the 1inch tokenlist
       const res = await axios.get('https://tokens.1inch.eth.link');
@@ -193,7 +231,7 @@ function App() {
       setVerifiedERC20s(tokens);
     }
     tokenlistPlaceholder();
-    */
+    
     
     livenessCheck();
     chrome.tabs && chrome.tabs.query({
@@ -239,13 +277,21 @@ function App() {
     tabData: tabData,
   };
 
+  const EOAsPageProps : ContractsPageProps = {
+    contracts: others,
+    showContracts: showEOAs,
+    setShowContracts: setShowEOAs,
+    tabData: tabData,
+  };
+
   return (
     <>
-      {showTokens && <NewPage {...erc20PageProps}/>}
-      {showNfts && <NewPage {...nftsPageProps}/>}
+      {showTokens && <Tokens {...erc20PageProps}/>}
+      {showNfts && <Tokens {...nftsPageProps}/>}
+      {showEOAs && <EOAs {...EOAsPageProps}/>}
       {showUnverifiedContracts && <UnverifiedContracts {...unverifiedContractPageProps}/>}
       {showVerifiedContracts && <VerifiedContracts {...verifiedContractPageProps}/>}
-      {!showVerifiedContracts && !showUnverifiedContracts && !showNfts &&!showTokens &&
+      {!showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
         <body className='w-[340px] bg-slate-50'>
           <Header {...tabData}/>
           {
@@ -262,7 +308,7 @@ function App() {
               <img src={blocksGif} className='h-20 w-20'/>
             </div>
           }
-          { !loading && allAddressesOfPage.length == 0 &&
+          {!loading && allAddressesOfPage.length == 0 && analysisDone &&
           <>
             <div className='flex items-center ml-7'>
               <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
@@ -272,10 +318,20 @@ function App() {
             </div>
           </>
           }
-          {/*
-          allAddressesOfPage.length !== 0 && analysisDone && !loading && 
+          {/*!loading && indexingNecessary && analysisDone 
           */}
-          {allAddressesOfPage.length !== 0 && analysisDone && !loading && 
+          { !loading && indexingNecessary && analysisDone &&
+          <>
+            <div className='text-lg font-semibold text-center p-2 flex'>
+              <ExclamationTriangleIcon className='w-15 h-15'/>
+              We discovered {amountToIndex} new addresses needing indexing out of total {allAddressesOfPage.length} addresses. Estimated waiting time ~5 minutes.
+            </div>
+          </>
+          }
+          {/*
+          allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary 
+          */}
+          {allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary &&
           <>
             <div className="grid grid-cols-3 gap-0 pb-5">
               <div></div>
@@ -299,6 +355,20 @@ function App() {
             </div>
             <div className='text-lg font-semibold text-center pt-6'>
               Verified over {unverifiedContracts.length+verifiedContracts.length} contracts analysed.
+            </div>
+            <div className='text-xs text-center'>Found unverified contracts on the following chains: <br/>
+              {chainsWithUnverifiedContracts.map((chainId, index) => {
+
+                if (index === chainsWithUnverifiedContracts.length-1) {
+                  return (
+                    <span key={chainId}>{getNameOfChainWithChainId(chainId)}</span>
+                  );
+                } else {
+                  return (
+                    <span key={chainId}>{getNameOfChainWithChainId(chainId)}, </span>
+                  );
+                }
+              })}
             </div>
             <div className='text-center my-2 mx-2'>
               <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
@@ -331,7 +401,7 @@ function App() {
                   <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{nftTokens.length}</dd>
                 </div>
                 }
-                <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();}}>
+                <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();setShowEOAs(!showEOAs);}}>
                   <dt className="text-xs text-blue-500">Other Addresses</dt>
                   <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{others.length}</dd>
                 </div>

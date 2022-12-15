@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
-import {AddressCollection, ContractsPageProps} from './structs';
+import {AddressCollection, ContractsPageProps, TabData} from './structs';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
 import Header from './Header';
 import { getImageOfLogoUsingChainId,returnBlockchainExplorerLinkWithChainId } from './helpers';
 
-function saveToJsonAndDownload(contracts: AddressCollection[]){
+function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
   const json = JSON.stringify(contracts);
   const blob = new Blob([json], {type: 'application/json'});
   const href = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = href;
-  link.download = 'contracts.json';
+  link.download = tabData.title+'_verified.json';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -23,7 +23,7 @@ function VerifiedContracts(pageProps: ContractsPageProps) {
     pageProps.contracts.sort((a, b) => {
       return a.verifiedon[0] - b.verifiedon[0];
     });
-  }, [pageProps]);
+  }, []);
 
   return (
     <>
@@ -36,7 +36,7 @@ function VerifiedContracts(pageProps: ContractsPageProps) {
                 <thead className="">
                   <div className="grid grid-cols-7 items-center my-2">
                     <div>
-                      <ArrowDownTrayIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();saveToJsonAndDownload(pageProps.contracts);}}/>
+                      <ArrowDownTrayIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();saveToJsonAndDownload(pageProps.tabData,pageProps.contracts);}}/>
                     </div>
                     <div></div>
                     <div className="ml-7 text-lg flex col-span-3 text-center text-gray-600 font-semibold">{pageProps.contracts.length} contracts</div>

@@ -1,3 +1,31 @@
+import { AddressCollection } from './structs';
+
+
+export function getNameOfChainWithChainId(chainId: number) {
+  switch (chainId) {
+  case 1:
+    return 'Ethereum';
+  case 10:
+    return 'Optimism';
+  case 137:
+    return 'Polygon';
+  case 42161:
+    return 'Arbitrum';
+  case 43114:
+    return 'Avalanche';
+  case 56:
+    return 'BSC';
+  case 250:
+    return 'Fantom';
+  case 42220:
+    return 'Celo';
+  case 1284:
+    return 'Moonbeam';
+  case 100:
+    return 'Gnosis Chain'; 
+  }
+}
+
 export function getImageOfLogoUsingChainId(chainId: number) {
   switch (chainId) {
   case 1:
@@ -72,5 +100,16 @@ export function percentToColor(p: number) :string{
   } else {
     return '#E84029';
   }
+}
 
+export function getChainsWithUnverifiedContracts(unverifiedContracts :AddressCollection[]) :number[] {
+  const chains :number[] = [];
+  for(let i =0; i<unverifiedContracts.length; i++){
+    if(unverifiedContracts[i].unverifiedon !== undefined){
+      if (!chains.includes(unverifiedContracts[i].unverifiedon[0])){
+        chains.push(unverifiedContracts[i].unverifiedon[0]);
+      }
+    } 
+  }
+  return chains;
 }

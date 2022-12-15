@@ -1,17 +1,16 @@
 import React, { useEffect } from 'react';
 import {AddressCollection, ContractsPageProps, TabData} from './structs';
-import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
+import {XMarkIcon, ArrowDownTrayIcon,ArrowTopRightOnSquareIcon} from '@heroicons/react/20/solid';
 import Header from './Header';
-import { getImageOfLogoUsingChainId,returnBlockchainExplorerLinkWithChainId } from './helpers';
 
 
-function saveToJsonAndDownload(tabData : TabData,contracts: AddressCollection[]){
+function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
   const json = JSON.stringify(contracts);
   const blob = new Blob([json], {type: 'application/json'});
   const href = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = href;
-  link.download = tabData.title+' Unverified.json';
+  link.download = tabData.title+'Eoas.json';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -19,15 +18,11 @@ function saveToJsonAndDownload(tabData : TabData,contracts: AddressCollection[])
 
 
 
-function UnverifiedContracts(pageProps: ContractsPageProps) {
+function EOAs(pageProps: ContractsPageProps) {
 
   useEffect(() => {
     console.log('contracts', pageProps.contracts);
-    // sort the contracts by unverifiedon[0]
-    pageProps.contracts.sort((a, b) => {
-      return a.unverifiedon[0] - b.unverifiedon[0];
-    });
-  }, []);
+  }, [pageProps]);
 
   return (
     <>
@@ -55,7 +50,6 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
                   {pageProps.contracts.map((contract) => (
                     <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={contract.address}>
                       <div className="ml-2">
-                        <img src={getImageOfLogoUsingChainId(contract.unverifiedon[0])} className="h-5 w-5"/>
                       </div>
                       <div className="ml-7 text-lg mt-1 col-span-5 text-center">
                         {
@@ -63,7 +57,7 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
                         }
                       </div>
                       <div>
-                        <ArrowTopRightOnSquareIcon className='h-5 w-5 ml-2 hover:text-blue-500' onClick={(e)=>{e.preventDefault(),window.open(returnBlockchainExplorerLinkWithChainId(contract?.unverifiedon[0])+'/address/'+contract.address, '_blank');}}/>
+                        <ArrowTopRightOnSquareIcon className='h-5 w-5 ml-2 hover:text-blue-500' onClick={(e)=>{e.preventDefault(),window.open('https://debank.com/profile/'+contract.address, '_blank');}}/>
                       </div>
                     </div>
                   ))}
@@ -77,4 +71,4 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
   );
 }
 
-export default UnverifiedContracts;
+export default EOAs;

@@ -12,7 +12,7 @@ export interface AddressCollection {
     isContract: boolean;
     existsOn : number[];
     verifiedon: number[];
-    nonverifiedon: number[];
+    unverifiedon: number[];
     tabData : TabData;
 }
 

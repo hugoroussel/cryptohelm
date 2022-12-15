@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {ERC20sPageProps, TokenListToken} from './structs';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
 import Header from './Header';
@@ -17,7 +17,16 @@ function saveToJsonAndDownload(erc20s: TokenListToken[]){
   document.body.removeChild(link);
 }
 
+
+
+
 function ERC20s(pageProps: ERC20sPageProps) {
+  useEffect(() => {
+    pageProps.erc20s.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    }
+    );
+  }, []);
 
   return (
     <>
