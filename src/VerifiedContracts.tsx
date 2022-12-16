@@ -19,7 +19,6 @@ function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
 function VerifiedContracts(pageProps: ContractsPageProps) {
 
   useEffect(() => {
-    console.log('contracts', pageProps.contracts);
     pageProps.contracts.sort((a, b) => {
       return a.verifiedon[0] - b.verifiedon[0];
     });

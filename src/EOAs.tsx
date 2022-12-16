@@ -21,7 +21,7 @@ function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
 function EOAs(pageProps: ContractsPageProps) {
 
   useEffect(() => {
-    console.log('contracts', pageProps.contracts);
+    //
   }, [pageProps]);
 
   return (

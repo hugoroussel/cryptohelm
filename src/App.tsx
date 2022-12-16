@@ -2,40 +2,47 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, ExclamationTriangleIcon} from '@heroicons/react/20/solid';
-import {ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection} from './structs';
+import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon} from '@heroicons/react/20/solid';
+import {AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps} from './structs';
 import Tokens from './Tokens';
 import Header from './Header';
+import Navbar from './Navbar';
 import UnverifiedContracts from './UnverifiedContracts';
 import VerifiedContracts from './VerifiedContracts';
+import FAQ from './FAQ';
 import EOAs from './EOAs';
+import Stats from './Stats';
 import blocksGif from './blocks.gif';
 import { Circle } from 'rc-progress';
-import {percentToColor, getChainsWithUnverifiedContracts,getImageOfLogoUsingChainId, getNameOfChainWithChainId} from './helpers';
-import unverifiedPlaceholder from './unverifiedcontracts.json';
-import logo from './logo192.png';
+import {percentToColor, getChainsWithUnverifiedContracts, getNameOfChainWithChainId} from './helpers';
+import Logo from './Logo';
+import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import Account from './Account';
+
+const tabs = [
+  { name: 'shield', href: '#', icon: ShieldCheckIcon, current: true },
+  { name: 'stats', href: '#', icon: ArrowTrendingUpIcon, current: false },
+  { name: 'account', href: '#', icon: UserIcon, current: false },
+  { name: 'info', href: '#', icon: QuestionMarkCircleIcon, current: false },
+];
 
 function getAddresses() {
   // get the inner html of the page
   const html = document.documentElement.innerHTML;
-  console.log('html', html.length);
   const addressesFound: string[]= [];
   // find addresses in the inner html of the page
   const found = html.match(/0x[a-fA-F0-9]{40}/g);
   if (found !== null) {
     for (let i = 0; i < found.length; i++) {
-      console.log('found address', found[i]);
       addressesFound.push(found[i]);
     }
   }
   const uniqueAddresses = new Set(addressesFound);
   const uniqueAddressesArray = Array.from(uniqueAddresses.values());
-  console.log('found ', uniqueAddressesArray.length, ' addresses on the page');
   
   const scripts = document.getElementsByTagName('script');
   const sources = [] as string[];
   if (scripts !== undefined) {
-    console.log('found ', scripts.length, ' scripts on the page');
     for (let i = 0; i < scripts.length; i++) {
       sources.push(scripts[i].src);
     }
@@ -45,17 +52,17 @@ function getAddresses() {
 }
 
 function App() {
+
+  // App state
   const [loading, setLoading] = useState<boolean>(true);
   const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
   const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/8RetlRE.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [noAddressDetected, setNoAddressDetected] = useState<boolean>(false);
-
   const [analysisDone, setAnalysisDone] = useState<boolean>(false);
-
   const [percent, setPercent] = useState<number>(100);
   const [pgColor, setPgColor] = useState<string>('#3498db');
-
+  const [appTabs, setAppTabs] = useState<AppTab[]>([]);
 
   // Pages
   const [showUnverifiedContracts, setShowUnverifiedContracts] = useState<boolean>(false);
@@ -63,13 +70,16 @@ function App() {
   const [showTokens, setShowTokens] = useState<boolean>(false);
   const [showEOAs, setShowEOAs] = useState<boolean>(false);
   const [showNfts, setShowNfts] = useState<boolean>(false);
+  const [showAccount, setShowAccount] = useState<boolean>(false);
+  const [showFaq, setShowFaq] = useState<boolean>(false);
+  const [showStats, setShowStats] = useState<boolean>(false);
 
   // Data states
   const [allAddressesOfPage, setAllAddresesOfPage] = useState<string[]>([]);
   const [verifiedERC20s, setVerifiedERC20s] = useState<TokenListToken[]>([]);
   const [amountToIndex, setAmountToIndex] = useState<number>(0);
   const [others, setOthers] = useState<AddressCollection[]>([]);
-  const [nftTokens, setNftTokens] = useState<TokenListToken[]>([]);
+  const [nfts, setNfts] = useState<TokenListToken[]>([]);
   const [chainsWithUnverifiedContracts, setChainsWithUnverifiedContracts] = useState<number[]>([]);
 
   const [unverifiedContracts, setUnverifiedContracts] = useState<AddressCollection[]>([]);
@@ -86,9 +96,9 @@ function App() {
   const [activeTab, setActiveTab] = useState<chrome.tabs.Tab>(nullTab);
 
 
+
   function refreshTabData(at: chrome.tabs.Tab){
     const activeTab = at;
-    // console.log('activeTab (found in react state)', activeTab);
     if(activeTab.id === 0) {
       return;
     }
@@ -99,7 +109,6 @@ function App() {
   }
 
   function runScan(){
-    console.log('running scan...');
     setLoading(true);
     runAnalysis(allAddressesOfPage);
   }
@@ -128,15 +137,20 @@ function App() {
       });
     chrome.runtime.onMessage.addListener(
       function(request) {
-        console.log('got message from content script', request);
-        setAllAddresesOfPage(request.innerHtmlAddresses);
-        readAllScripts(request.scripts);
+        // get cached addresses from the local storage
+        const cache = localStorage.getItem('cache');
+        const parsedCache = JSON.parse(cache || '[]');
+        if(parsedCache.url === undefined || parsedCache.url !== tabData.url){
+          setAllAddresesOfPage(request.innerHtmlAddresses);
+          readAllScripts(request.scripts);
+        } else {
+          setAllAddresesOfPage(parsedCache.addresses);
+        }
       }
     );
   }
 
   function readAllScripts(scripts: string[]){
-    console.log('reading scripts of page to detect addresses...');
     const addressesFound: string[] = [];
     async function fetchReadAndFindAddresses(scripts: string[]){
       for(let i=0; i < scripts.length; i++){
@@ -144,7 +158,6 @@ function App() {
         if(scripts[i].includes('chrome-extension')){
           continue;
         }
-        console.log('script', scripts[i]);
         const response = await fetch(scripts[i]);
         const text = await response.text();
         const found = text.match(/0x[a-fA-F0-9]{40}/g);
@@ -160,26 +173,25 @@ function App() {
       const newArray = Array.from(uniqueAddresses).concat(allAddressesOfPage);
       const uniqueAddresses2 = new Set(newArray);
       const uniqueAddressesArray = Array.from(uniqueAddresses2.values());
-      console.log('uniqueAddresses', uniqueAddressesArray.length);
       setAllAddresesOfPage(uniqueAddressesArray );
+      // save data in local storage
+      const data = {addresses: uniqueAddressesArray, url: tabData.url};
+      localStorage.setItem('cache', JSON.stringify(data));
     }
     fetchReadAndFindAddresses(scripts);
   }
 
   function runAnalysis(addresses : string[]){
-    console.log('running analysis...');
     if (addresses.length === 0) {
-      console.log('no addresses detected!');
       setLoading(false);
       setNoAddressDetected(true);
       setAnalysisDone(true);
       return;
     }
-    console.log('running analysis with addresses', addresses.length);
+    setNoAddressDetected(false);
     async function callServer(addresses : string[]) {
       const data = {addresses: addresses};
       const res = await axios.post(`${process.env.REACT_APP_SERVER_URL}/analyze`, data);
-
       if (res.data.amountToIndex > 0){
         setAnalysisDone(true);
         setLoading(false);
@@ -191,13 +203,12 @@ function App() {
         return a.unverifiedon[0] - b.unverifiedon[0];
       });
       setUnverifiedContracts(sortedUnverifiedContracts);
-      console.log('sortedUnverifiedContracts', sortedUnverifiedContracts);
       const sortedVerifiedContracts = res.data.verifiedContracts.sort((a: AddressCollection, b :AddressCollection) => b.verifiedon[0] - a.verifiedon[0]);
       setVerifiedContracts(sortedVerifiedContracts);
       const sortedTokensByName = res.data.verifiedERC20s.sort((a: TokenListToken, b :TokenListToken) => a.name.localeCompare(b.name));
       setVerifiedERC20s(sortedTokensByName);
-
-
+      const sortedNfts = res.data.nfts.sort((a: TokenListToken, b :TokenListToken) => a.name.localeCompare(b.name));
+      setNfts(sortedNfts);
       setChainsWithUnverifiedContracts(getChainsWithUnverifiedContracts(res.data.unverifiedContracts));
       setOthers(res.data.eoas);
       const p = (1-(res.data.unverifiedContracts.length / (res.data.verifiedContracts.length + res.data.unverifiedContracts.length)))*100;
@@ -205,7 +216,17 @@ function App() {
       setPgColor(percentToColor(p));
       setLoading(false);
       setAnalysisDone(true);
-      console.log('analysis done', loading, analysisDone);
+      // add the url to the local storage
+      const urls = JSON.parse(localStorage.getItem('urls') || '[]');
+      let unverifiedContractsFoundSoFar = JSON.parse(localStorage.getItem('unverifiedContractsAmount') || '0');
+      // check if the url is already in the list
+      if (urls.includes(tabData.url)){
+        return;
+      }
+      const newUrls = [...urls, tabData.url];
+      localStorage.setItem('urls', JSON.stringify(newUrls));
+      unverifiedContractsFoundSoFar += res.data.unverifiedContracts.length;
+      localStorage.setItem('unverifiedContractsAmount', JSON.stringify(unverifiedContractsFoundSoFar));
     }
     callServer(addresses);
   }
@@ -223,6 +244,8 @@ function App() {
     setUnverifiedContracts(placeHolderData);
     setChainsWithUnverifiedContracts(getChainsWithUnverifiedContracts(placeHolderData));
     */
+
+    setAppTabs(tabs);
     
     async function tokenlistPlaceholder(){
       // get the 1inch tokenlist
@@ -231,18 +254,13 @@ function App() {
       setVerifiedERC20s(tokens);
     }
     tokenlistPlaceholder();
-    
-    
     livenessCheck();
     chrome.tabs && chrome.tabs.query({
     }, (tabs) => {
       const activeTab = tabs.find((tab) => tab.active);
       if (activeTab) {
-        console.log('activeTab', activeTab);
         setActiveTab(activeTab);
         refreshTabData(activeTab);
-      }else{
-        console.log('no active tab');
       }
     });
   }, []);
@@ -259,7 +277,7 @@ function App() {
     showTokens: showNfts,
     setShowTokens: setShowNfts,
     serverLive: serverLive,
-    erc20s: nftTokens,
+    erc20s: nfts,
     tabData: tabData,
   };
 
@@ -284,6 +302,27 @@ function App() {
     tabData: tabData,
   };
 
+  const NavbarProps : NavbarProps = {
+    appTabs: appTabs,
+    setAppTabs: setAppTabs,
+    showAccount: showAccount,
+    setShowAccount: setShowAccount,
+    setShowFAQ: setShowFaq,
+    showFAQ: showFaq,
+    showStats: showStats,
+    setShowStats: setShowStats,
+  };
+
+  const AccountPageProps : AccountPageProps = {
+    tabData: tabData,
+    navbarProps: NavbarProps,
+  };
+
+  const StatsPageProps : AccountPageProps = {
+    tabData: tabData,
+    navbarProps: NavbarProps,
+  };
+
   return (
     <>
       {showTokens && <Tokens {...erc20PageProps}/>}
@@ -291,26 +330,24 @@ function App() {
       {showEOAs && <EOAs {...EOAsPageProps}/>}
       {showUnverifiedContracts && <UnverifiedContracts {...unverifiedContractPageProps}/>}
       {showVerifiedContracts && <VerifiedContracts {...verifiedContractPageProps}/>}
-      {!showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
-        <body className='w-[340px] bg-slate-50'>
+      {showAccount && <Account {...AccountPageProps}/>}
+      {showFaq && <FAQ {...AccountPageProps}/>}
+      {showStats && <Stats {...StatsPageProps}/>}
+      {!showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
+        <body className='w-[380px] bg-slate-50'>
           <Header {...tabData}/>
-          {
-            <div className='grid grid-cols-3 pb-2'>
-              <div></div>
-              <div className="">
-                <img src={logo} className='h-[90px] w-[80px] container mb-6'/>
-              </div>
-              <div></div>
-            </div>
+          <Navbar {...NavbarProps}/>
+          { noAddressDetected &&
+            <Logo/>
           }
           {loading && 
             <div className="flex justify-center pb-2">
               <img src={blocksGif} className='h-20 w-20'/>
             </div>
           }
-          {!loading && allAddressesOfPage.length == 0 && analysisDone &&
+          {!loading && allAddressesOfPage.length == 0 && analysisDone && noAddressDetected &&
           <>
-            <div className='flex items-center ml-7'>
+            <div className='flex items-center ml-14'>
               <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
               <div className="text-lg font-semibold">
               No addresses detected
@@ -318,18 +355,20 @@ function App() {
             </div>
           </>
           }
-          {/*!loading && indexingNecessary && analysisDone 
-          */}
-          { !loading && indexingNecessary && analysisDone &&
+          {/**/}
+          {!loading && indexingNecessary && analysisDone &&
           <>
-            <div className='text-lg font-semibold text-center p-2 flex'>
-              <ExclamationTriangleIcon className='w-15 h-15'/>
-              We discovered {amountToIndex} new addresses needing indexing out of total {allAddressesOfPage.length} addresses. Estimated waiting time ~5 minutes.
+            <div className='text-lg font-semibold text-center p-2'>
+              <div className='grid grid-cols-3'>
+                <div></div>
+                <div><ExclamationTriangleIcon className='w-12 h-12 ml-6'/></div>
+                <div></div>
+              </div>
+              Indexing {amountToIndex} new addresses out of {allAddressesOfPage.length} addresses. Expected wait time ~{Math.round((amountToIndex * 2) / 60)} minutes
             </div>
           </>
           }
           {/*
-          allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary 
           */}
           {allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary &&
           <>
@@ -353,23 +392,31 @@ function App() {
               }
               <div></div>
             </div>
-            <div className='text-lg font-semibold text-center pt-6'>
-              Verified over {unverifiedContracts.length+verifiedContracts.length} contracts analysed.
+            <div className='text-lg font-semibold text-center pt-6 py-4'>
+              Found {unverifiedContracts.length} unverified contracts out of the {unverifiedContracts.length+verifiedContracts.length} contracts contained in the page.
             </div>
             <div className='text-xs text-center'>Found unverified contracts on the following chains: <br/>
               {chainsWithUnverifiedContracts.map((chainId, index) => {
-
                 if (index === chainsWithUnverifiedContracts.length-1) {
                   return (
-                    <span key={chainId}>{getNameOfChainWithChainId(chainId)}</span>
+                    <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}</span>
                   );
                 } else {
                   return (
-                    <span key={chainId}>{getNameOfChainWithChainId(chainId)}, </span>
+                    <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}, </span>
                   );
                 }
               })}
+              <br/>
+              <button
+                type="button"
+                className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-[#1DA1F2] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <a className="twitter-share-button text-center" href="https://twitter.com/intent/tweet?text=Hello%20world" data-size="large" target="_blank" rel="noreferrer">Tweet</a>
+              </button>
+              
             </div>
+            
             <div className='text-center my-2 mx-2'>
               <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
                 {unverifiedContracts.length > 0 &&
@@ -395,10 +442,10 @@ function App() {
                         })*/}
                   </div>     
                 </div>
-                {nftTokens.length > 0 &&
+                {nfts.length > 0 &&
                 <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
                   <dt className="text-xs text-blue-500">NFT addresses</dt>
-                  <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{nftTokens.length}</dd>
+                  <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{nfts.length}</dd>
                 </div>
                 }
                 <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();setShowEOAs(!showEOAs);}}>

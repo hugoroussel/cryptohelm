@@ -20,10 +20,7 @@ function saveToJsonAndDownload(tabData : TabData,contracts: AddressCollection[])
 
 
 function UnverifiedContracts(pageProps: ContractsPageProps) {
-
   useEffect(() => {
-    console.log('contracts', pageProps.contracts);
-    // sort the contracts by unverifiedon[0]
     pageProps.contracts.sort((a, b) => {
       return a.unverifiedon[0] - b.unverifiedon[0];
     });

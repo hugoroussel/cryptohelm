@@ -104,7 +104,7 @@ export function percentToColor(p: number) :string{
 
 export function getChainsWithUnverifiedContracts(unverifiedContracts :AddressCollection[]) :number[] {
   const chains :number[] = [];
-  for(let i =0; i<unverifiedContracts.length; i++){
+  for(let i=0; i<unverifiedContracts.length; i++){
     if(unverifiedContracts[i].unverifiedon !== undefined){
       if (!chains.includes(unverifiedContracts[i].unverifiedon[0])){
         chains.push(unverifiedContracts[i].unverifiedon[0]);

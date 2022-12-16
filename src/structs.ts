@@ -1,3 +1,26 @@
+export interface AccountPageProps {
+    // navbarProps: NavbarProps;
+    tabData : TabData;
+    navbarProps: NavbarProps;
+}
+
+export interface NavbarProps {
+    appTabs : AppTab[];
+    setAppTabs: React.Dispatch<React.SetStateAction<AppTab[]>>;
+    showAccount: boolean;
+    setShowAccount: React.Dispatch<React.SetStateAction<boolean>>;
+    showFAQ : boolean;
+    setShowFAQ : React.Dispatch<React.SetStateAction<boolean>>;
+    showStats : boolean;
+    setShowStats : React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface AppTab {
+    name: string;
+    icon: (props: React.ComponentProps<'svg'>) => JSX.Element;
+    current: boolean;
+}
+
 export interface ContractsPageProps {
     contracts: AddressCollection[];
     showContracts: boolean;
