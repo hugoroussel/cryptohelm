@@ -2,22 +2,25 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon} from '@heroicons/react/20/solid';
-import {AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps} from './structs';
+import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon, DocumentCheckIcon, CheckBadgeIcon} from '@heroicons/react/20/solid';
+import {AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps, PhishingWarningPageProps} from './types/types';
 import Tokens from './Tokens';
-import Header from './Header';
-import Navbar from './Navbar';
+import Header from './components/Header';
+import Navbar from './components/Navbar';
 import UnverifiedContracts from './UnverifiedContracts';
 import VerifiedContracts from './VerifiedContracts';
 import FAQ from './FAQ';
 import EOAs from './EOAs';
 import Stats from './Stats';
+import Account from './Account';
+import PhishingWarning from './PhishingWarning';
 import blocksGif from './blocks.gif';
 import { Circle } from 'rc-progress';
 import {percentToColor, getChainsWithUnverifiedContracts, getNameOfChainWithChainId} from './helpers';
-import Logo from './Logo';
+import Logo from './components/Logo';
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import Account from './Account';
+import CountUp from 'react-countup';
+import { tab } from '@testing-library/user-event/dist/tab';
 
 const tabs = [
   { name: 'shield', href: '#', icon: ShieldCheckIcon, current: true },
@@ -73,6 +76,7 @@ function App() {
   const [showAccount, setShowAccount] = useState<boolean>(false);
   const [showFaq, setShowFaq] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [showPhishingDetected, setShowPhishingDetected] = useState<boolean>(false);
 
   // Data states
   const [allAddressesOfPage, setAllAddresesOfPage] = useState<string[]>([]);
@@ -95,8 +99,6 @@ function App() {
     id: 0,} as chrome.tabs.Tab;
   const [activeTab, setActiveTab] = useState<chrome.tabs.Tab>(nullTab);
 
-
-
   function refreshTabData(at: chrome.tabs.Tab){
     const activeTab = at;
     if(activeTab.id === 0) {
@@ -104,8 +106,24 @@ function App() {
     }
     const urlCleaned = activeTab?.url?.split('/').slice(0, 3).join('/');
     const newTabData = {favIconUrl: activeTab?.favIconUrl, title: activeTab?.title, url: urlCleaned} as TabData;
+    detectPhishing(urlCleaned || '', at);
     setTabData(newTabData);
-   
+  }
+
+  function detectPhishing(url :string, tab: chrome.tabs.Tab){
+    async function callCryptoScamsDB(){
+      // remove the http or https 
+      url = url.replace('https://','');
+      url = url.replace('http://','');
+      console.log('calling the crypto scams db api with', url);
+      const res = await axios.get('https://api.cryptoscamdb.org/v1/check/'+url);
+      console.log('crypto scams resp', res);
+      console.log('crypto scams resp', res.data.result.status);
+      if(res.data.result.status === 'blocked'){
+        setShowPhishingDetected(true);
+      }
+    }
+    callCryptoScamsDB();
   }
 
   function runScan(){
@@ -242,11 +260,7 @@ function App() {
     /*
     const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
     setUnverifiedContracts(placeHolderData);
-    setChainsWithUnverifiedContracts(getChainsWithUnverifiedContracts(placeHolderData));
-    */
-
-    setAppTabs(tabs);
-    
+    setChainsWithUnverifiedContracts(getChainsWithUnverifiedContracts(placeHolderData)); 
     async function tokenlistPlaceholder(){
       // get the 1inch tokenlist
       const res = await axios.get('https://tokens.1inch.eth.link');
@@ -254,7 +268,10 @@ function App() {
       setVerifiedERC20s(tokens);
     }
     tokenlistPlaceholder();
+    */
+    setAppTabs(tabs);
     livenessCheck();
+    // detectPhishing('metamaskconnect.online');
     chrome.tabs && chrome.tabs.query({
     }, (tabs) => {
       const activeTab = tabs.find((tab) => tab.active);
@@ -264,6 +281,12 @@ function App() {
       }
     });
   }, []);
+
+  const warningPhishingPageProps :PhishingWarningPageProps = {
+    setShowWarningPage: setShowPhishingDetected,
+    showWarningPage: showPhishingDetected,
+    tab: activeTab,
+  };
 
   const erc20PageProps: ERC20sPageProps = {
     showTokens: showTokens,
@@ -333,10 +356,14 @@ function App() {
       {showAccount && <Account {...AccountPageProps}/>}
       {showFaq && <FAQ {...AccountPageProps}/>}
       {showStats && <Stats {...StatsPageProps}/>}
-      {!showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
+      {showPhishingDetected && <PhishingWarning {...warningPhishingPageProps}/>}
+      {!showPhishingDetected && !showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
         <body className='w-[380px] bg-slate-50'>
           <Header {...tabData}/>
           <Navbar {...NavbarProps}/>
+          {/* 
+          
+          */}
           { noAddressDetected &&
             <Logo/>
           }
@@ -345,6 +372,9 @@ function App() {
               <img src={blocksGif} className='h-20 w-20'/>
             </div>
           }
+          {/*
+          
+        */}
           {!loading && allAddressesOfPage.length == 0 && analysisDone && noAddressDetected &&
           <>
             <div className='flex items-center ml-14'>
@@ -369,16 +399,28 @@ function App() {
           </>
           }
           {/*
+          
           */}
-          {allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary &&
+          { allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary &&
           <>
+
             <div className="grid grid-cols-3 gap-0 pb-5">
               <div></div>
               {percent < 100 &&
               <div className='flex pl-1'>
                 <Circle className='absolute h-[100px] w-[100px] mx-1' percent={percent} strokeWidth={8} strokeColor={pgColor} trailWidth={0.01} strokeLinecap="round"/>
                 <div className={'pl-[30px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
-                  {percent.toFixed(0)}%
+                  <CountUp
+                    start={0}
+                    duration={1}
+                    end={Number(percent.toFixed(0))}
+                    preserveValue
+                    style={{
+                      color: 'inherit'
+                    }}
+                    className='count-up jockey'
+                  />
+                  %
                 </div>
               </div>
               }
@@ -386,7 +428,17 @@ function App() {
               <div className='flex pl-1'>
                 <Circle className='absolute h-[100px] w-[100px] mx-1' percent={percent} strokeWidth={8} strokeColor={pgColor} trailWidth={0.01} strokeLinecap="round"/>
                 <div className={'pl-[24px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
-                  {percent.toFixed(0)}%
+                  <CountUp
+                    start={0}
+                    duration={1}
+                    end={Number(percent.toFixed(0))}
+                    preserveValue
+                    style={{
+                      color: 'inherit'
+                    }}
+                    className='count-up jockey'
+                  />
+                  %
                 </div>
               </div>
               }
@@ -407,14 +459,15 @@ function App() {
                   );
                 }
               })}
+              
               <br/>
+
               <button
                 type="button"
                 className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-[#1DA1F2] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 <a className="twitter-share-button text-center" href="https://twitter.com/intent/tweet?text=Hello%20world" data-size="large" target="_blank" rel="noreferrer">Tweet</a>
               </button>
-              
             </div>
             
             <div className='text-center my-2 mx-2'>
@@ -431,17 +484,19 @@ function App() {
                   <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{verifiedContracts.length}</dd>
                 </div>
                 }
-                <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
-                  <dt className="text-xs text-blue-500">Verified ERC20s</dt>
-                  <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{verifiedERC20s.length}</dd>
-                  <div className='flex'>
-                    {/*
+                { verifiedERC20s.length > 0 &&
+                  <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
+                    <dt className="text-xs text-blue-500">Verified ERC20s</dt>
+                    <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{verifiedERC20s.length}</dd>
+                    <div className='flex'>
+                      {/*
                       verifiedERC20s.slice(8,15).map((token) => {
                         return (
                           <img src={token.logoURI} className="w-3 h-3 mr-0.5" key={token.address}/>);
                         })*/}
-                  </div>     
-                </div>
+                    </div>     
+                  </div>
+                }
                 {nfts.length > 0 &&
                 <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
                   <dt className="text-xs text-blue-500">NFT addresses</dt>

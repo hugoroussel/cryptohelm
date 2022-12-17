@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import {AddressCollection, ContractsPageProps, TabData} from './structs';
+import {AddressCollection, ContractsPageProps, TabData} from './types/types';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
-import Header from './Header';
+import Header from './components/Header';
 import { getImageOfLogoUsingChainId,returnBlockchainExplorerLinkWithChainId } from './helpers';
 
 function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
@@ -10,7 +10,7 @@ function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
   const href = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = href;
-  link.download = tabData.title+'_verified.json';
+  link.download = tabData.title+'Verified.json';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

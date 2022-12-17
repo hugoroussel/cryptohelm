@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavbarProps } from './structs';
+import { NavbarProps } from '../types/types';
 
 
 

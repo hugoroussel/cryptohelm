@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import Header from './Header';
-import { AccountPageProps } from './structs';
-import Navbar from './Navbar';
-import Logo from './Logo';
+import Header from './components/Header';
+import { AccountPageProps } from './types/types';
+import Navbar from './components/Navbar';
+import Logo from './components/Logo';
 import { getImageOfLogoUsingChainId } from './helpers';
 
 function FAQ(pageProps :AccountPageProps) {

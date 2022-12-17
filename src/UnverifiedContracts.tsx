@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import {AddressCollection, ContractsPageProps, TabData} from './structs';
+import {AddressCollection, ContractsPageProps, TabData} from './types/types';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
-import Header from './Header';
+import Header from './components/Header';
 import { getImageOfLogoUsingChainId,returnBlockchainExplorerLinkWithChainId } from './helpers';
 
 

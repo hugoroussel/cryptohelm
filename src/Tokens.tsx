@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import {ERC20sPageProps, TokenListToken} from './structs';
+import {ERC20sPageProps, TokenListToken} from './types/types';
 import {ArrowTopRightOnSquareIcon, XMarkIcon, ArrowDownTrayIcon} from '@heroicons/react/20/solid';
-import Header from './Header';
+import Header from './components/Header';
 import {getImageOfLogoUsingChainId, returnBlockchainExplorerLinkWithChainId } from './helpers';
 
 

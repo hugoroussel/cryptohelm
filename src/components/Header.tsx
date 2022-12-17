@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BoltSlashIcon, BoltIcon, UserCircleIcon} from '@heroicons/react/20/solid';
 import {QuestionMarkCircleIcon} from '@heroicons/react/24/outline';
 import axios from 'axios';
-import { TabData } from './structs';
+import { TabData } from '../types/types';
 
 function Header(pageProps :TabData){
 

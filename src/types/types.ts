@@ -1,3 +1,10 @@
+export interface PhishingWarningPageProps {
+    showWarningPage : boolean;
+    setShowWarningPage: React.Dispatch<React.SetStateAction<boolean>>;
+    tab: chrome.tabs.Tab;
+}
+
+
 export interface AccountPageProps {
     // navbarProps: NavbarProps;
     tabData : TabData;

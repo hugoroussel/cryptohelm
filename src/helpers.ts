@@ -1,4 +1,4 @@
-import { AddressCollection } from './structs';
+import { AddressCollection } from './types/types';
 
 
 export function getNameOfChainWithChainId(chainId: number) {

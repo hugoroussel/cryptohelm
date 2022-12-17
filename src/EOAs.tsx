@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import {AddressCollection, ContractsPageProps, TabData} from './structs';
+import {AddressCollection, ContractsPageProps, TabData} from './types/types';
 import {XMarkIcon, ArrowDownTrayIcon,ArrowTopRightOnSquareIcon} from '@heroicons/react/20/solid';
-import Header from './Header';
+import Header from './components/Header';
 
 
 function saveToJsonAndDownload(tabData: TabData,contracts: AddressCollection[]){
