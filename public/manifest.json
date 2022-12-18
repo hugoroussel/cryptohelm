@@ -17,7 +17,7 @@
       }
   },
   "permissions": [
-    "activeTab", "scripting"
+    "activeTab", "scripting", "management"
   ],
   "externally_connectable": {
       "matches": ["*://*/*"]

@@ -1,53 +1,105 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import Header from './components/Header';
 import { AccountPageProps } from './types/types';
 import Navbar from './components/Navbar';
 import Logo from './components/Logo';
 import { getImageOfLogoUsingChainId } from './helpers';
+import { Disclosure } from '@headlessui/react';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
+
+const faqs = [
+  {
+    question: 'What does this app do?',
+    answer:
+      'Crypto Shield detects contract addresses contained in the dapps you visit and checks them on the different block explorer. It also prevents you from getting phished.',
+  }, 
+  {
+    question: 'What chains are supported?',
+    answer:
+      'The supported chains are Ethereum, Polygon, Optimism, Arbitrum, Fantom, BSC, Avalanche, Gnosis Chain, Moonbeam.',
+  }, 
+  {
+    question: 'What is a "Verified" contract?',
+    answer:
+      'A contract is verified if the source code has been posted and "verified" on a block explorer.',
+  },
+  {
+    question: 'Can a verified contract be malicious?',
+    answer:
+      'Yes, but at least everyone can read the source code. ',
+  },
+  {
+    question: 'I have more questions..',
+    answer:
+      'Reach out to me on Twitter @theleoruss',
+  },
+  // More questions...
+];
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 function FAQ(pageProps :AccountPageProps) {
 
   const chainIds = [1, 56, 137, 250, 42161, 10, 100, 1284, 42220, 43114 ];
 
+  const [open, setOpen] = useState<boolean>(false);
+
   return (
     <body className='w-[380px] bg-gray-50'>
       <Header {...pageProps.tabData}/>
       <Navbar {...pageProps.navbarProps}/>
-      <Logo/>
-      <div className='flex flex-col items-center pb-4'>
-        <div className='text-center -mt-5'>
-          <h1 className='text-2xl font-semibold text-gray-700'>FAQ</h1>
-          <div className='text-lg text-gray-700 px-3'>We help you detect if smart contract addresses injected in the pages you visit are verified on the corresponding block explorer.</div>
-          <h1 className='text-xl font-semibold text-gray-700'>Supported chains</h1>
-          <div className='flex pl-2 ml-6 pt-2'>
-            {
-              chainIds.map((token) => {
-                return (
-                  <img src={getImageOfLogoUsingChainId(token)} className="w-7 h-7 mr-0.5" key={token}/>);
-              })}
-          </div>   
-          <h1 className='text-xl font-semibold text-gray-700'>Follow us on Twitter</h1>
-          <h1 className='text-xl font-semibold text-gray-700'>Give feedback</h1>
-          <br/>
-          <div className='text-xs text-gray-700'>
-            <span>Powered by</span>
-            <br/>
-            <a className="text-blue-800 font-bold hover:underline" href="https://etherscan.io" target="_blank" rel="noreferrer">Etherscan.io, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://bscscan.com" target="_blank" rel="noreferrer">Bscscan.com, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://polygonscan.com" target="_blank" rel="noreferrer">Polygonscan.com, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://arbiscan.io" target="_blank" rel="noreferrer">Arbiscan.io, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://snowtrace.io" target ="_blank" rel="noreferrer">Snowtrace.io, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://ftmscan.com" target="_blank" rel="noreferrer">Ftmscan.com, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://celoscan.io" target="_blank" rel="noreferrer">Celoscan.io, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://gnosisscan.io" target="_blank" rel="noreferrer">Gnosisscan.io, </a>
-            <a className="text-blue-800 font-bold hover:underline" href="https://moonscan.io" target="_blank" rel="noreferrer">Moonscan.io</a>
-            <br/>
-            APIs
+      <div className="bg-gray-50">
+        <div className="mx-auto max-w-7xl py-2 px-2">
+          <div className="mx-auto max-w-3xl divide-y-2 divide-gray-200">
+            <h2 className="text-center text-lg font-bold tracking-tight text-gray-900">
+            Frequently asked questions
+            </h2>
+            <dl className="mt-6 space-y-6 divide-y divide-gray-200">
+              {faqs.map((faq) => (
+                <Disclosure as="div" key={faq.question} className="pt-6">
+                  {({open}) => (
+                    <>
+                      <dt className="text-md">
+                        <Disclosure.Button className="flex w-full items-start justify-between text-center text-gray-400">
+                          <span className="text-lg font-medium text-gray-900">{faq.question}</span>
+                          <span className="ml-3 flex h-7 items-center">
+                            <ChevronDownIcon
+                              className={classNames(open ? '-rotate-180' : 'rotate-0', 'h-6 w-6 transform')}
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </Disclosure.Button>
+                      </dt>
+                      <Disclosure.Panel as="dd" className="mt-2 pr-12">
+                        <p className="text-base text-gray-500">{faq.answer}</p>
+                      </Disclosure.Panel>
+                    </>
+                  )}
+                </Disclosure>
+              ))}
+            </dl>
           </div>
-            
+        </div>
+        <br/>
+        <div className='text-xs text-gray-700 text-center py-3'>
+          <span>Powered by</span>
+          <br/>
+          <a className="text-blue-800 font-bold hover:underline" href="https://etherscan.io" target="_blank" rel="noreferrer">Etherscan.io, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://bscscan.com" target="_blank" rel="noreferrer">Bscscan.com, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://polygonscan.com" target="_blank" rel="noreferrer">Polygonscan.com, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://arbiscan.io" target="_blank" rel="noreferrer">Arbiscan.io, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://snowtrace.io" target ="_blank" rel="noreferrer">Snowtrace.io, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://ftmscan.com" target="_blank" rel="noreferrer">Ftmscan.com, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://celoscan.io" target="_blank" rel="noreferrer">Celoscan.io, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://gnosisscan.io" target="_blank" rel="noreferrer">Gnosisscan.io, </a>
+          <a className="text-blue-800 font-bold hover:underline" href="https://moonscan.io" target="_blank" rel="noreferrer">Moonscan.io</a>
+          <br/>
+            APIs
         </div>
       </div>
-
     </body>
   );
 }

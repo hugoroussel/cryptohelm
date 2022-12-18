@@ -106,20 +106,18 @@ function App() {
     }
     const urlCleaned = activeTab?.url?.split('/').slice(0, 3).join('/');
     const newTabData = {favIconUrl: activeTab?.favIconUrl, title: activeTab?.title, url: urlCleaned} as TabData;
-    detectPhishing(urlCleaned || '', at);
+    detectPhishing(urlCleaned || '');
     setTabData(newTabData);
   }
 
-  function detectPhishing(url :string, tab: chrome.tabs.Tab){
+  function detectPhishing(url :string){
     async function callCryptoScamsDB(){
       // remove the http or https 
       url = url.replace('https://','');
       url = url.replace('http://','');
-      console.log('calling the crypto scams db api with', url);
       const res = await axios.get('https://api.cryptoscamdb.org/v1/check/'+url);
-      console.log('crypto scams resp', res);
-      console.log('crypto scams resp', res.data.result.status);
       if(res.data.result.status === 'blocked'){
+        warningPhishingPageProps.description = res.data.result.description;
         setShowPhishingDetected(true);
       }
     }
@@ -256,6 +254,12 @@ function App() {
     }
   }
 
+  function prepareTweet(){
+    const chains = getChainsWithUnverifiedContracts(unverifiedContracts);
+    const res = 'It%20seems%20'+tabData.url+'%20source%20code%20contains%20'+unverifiedContracts.length+'%20unverified%20contracts%20on%20'+chains.length+'%20different%20chains.%20To%20see%20the%20full%20list,%20download%20the%20Crypto%20Helm%20Chrome%20Extension.';
+    return 'https://twitter.com/intent/tweet?text='+res; 
+  }
+
   useEffect(() => {
     /*
     const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
@@ -286,6 +290,8 @@ function App() {
     setShowWarningPage: setShowPhishingDetected,
     showWarningPage: showPhishingDetected,
     tab: activeTab,
+    tabData: tabData,
+    description: '',
   };
 
   const erc20PageProps: ERC20sPageProps = {
@@ -412,7 +418,7 @@ function App() {
                 <div className={'pl-[30px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
                   <CountUp
                     start={0}
-                    duration={1}
+                    duration={0.5}
                     end={Number(percent.toFixed(0))}
                     preserveValue
                     style={{
@@ -430,7 +436,7 @@ function App() {
                 <div className={'pl-[24px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
                   <CountUp
                     start={0}
-                    duration={1}
+                    duration={0.5}
                     end={Number(percent.toFixed(0))}
                     preserveValue
                     style={{
@@ -466,7 +472,7 @@ function App() {
                 type="button"
                 className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-[#1DA1F2] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <a className="twitter-share-button text-center" href="https://twitter.com/intent/tweet?text=Hello%20world" data-size="large" target="_blank" rel="noreferrer">Tweet</a>
+                <a className="twitter-share-button text-center" href={prepareTweet()} data-size="large" target="_blank" rel="noreferrer">Tweet</a>
               </button>
             </div>
             

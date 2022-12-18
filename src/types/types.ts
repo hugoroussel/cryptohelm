@@ -2,6 +2,8 @@ export interface PhishingWarningPageProps {
     showWarningPage : boolean;
     setShowWarningPage: React.Dispatch<React.SetStateAction<boolean>>;
     tab: chrome.tabs.Tab;
+    tabData: TabData;
+    description: string;
 }
 
 
