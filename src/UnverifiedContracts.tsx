@@ -40,7 +40,7 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
                       <ArrowDownTrayIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();saveToJsonAndDownload(pageProps.tabData,pageProps.contracts);}}/>
                     </div>
                     <div></div>
-                    <div className="ml-7 text-lg flex col-span-3 text-center text-gray-600 font-semibold">{pageProps.contracts.length} contracts</div>
+                    <div className="ml-7 text-lg flex col-span-3 text-center font-semibold">{pageProps.contracts.length} contracts</div>
                     <div></div>
                     <div>
                       <XMarkIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();pageProps.setShowContracts(!pageProps.showContracts);}}/>
@@ -48,7 +48,7 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
                   </div>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white ">
-                  {pageProps.contracts.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No contracts founds</div>}
+                  {pageProps.contracts.length === 0 && <div className="text-center text-lg mt-10">No contracts founds</div>}
                   {pageProps.contracts.map((contract) => (
                     <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={contract.address}>
                       <div className="ml-2">

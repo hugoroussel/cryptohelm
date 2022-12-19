@@ -6,7 +6,7 @@ function Logo() {
     <div className='grid grid-cols-3 pb-2'>
       <div></div>
       <div className="">
-        <img src={logo} className='h-[90px] w-[80px] container mb-6'/>
+        <img src={logo} className='h-[120px] w-[110px] container'/>
       </div>
       <div></div>
     </div>

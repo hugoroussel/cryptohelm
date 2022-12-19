@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon, DocumentCheckIcon, CheckBadgeIcon} from '@heroicons/react/20/solid';
+import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon} from '@heroicons/react/20/solid';
 import {AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps, PhishingWarningPageProps} from './types/types';
 import Tokens from './Tokens';
 import Header from './components/Header';
@@ -20,7 +20,6 @@ import {percentToColor, getChainsWithUnverifiedContracts, getNameOfChainWithChai
 import Logo from './components/Logo';
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import CountUp from 'react-countup';
-import { tab } from '@testing-library/user-event/dist/tab';
 
 const tabs = [
   { name: 'shield', href: '#', icon: ShieldCheckIcon, current: true },
@@ -59,7 +58,7 @@ function App() {
   // App state
   const [loading, setLoading] = useState<boolean>(true);
   const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
-  const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/8RetlRE.png', title: '', url: 'unknown'});
+  const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/s7l9o11.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [noAddressDetected, setNoAddressDetected] = useState<boolean>(false);
   const [analysisDone, setAnalysisDone] = useState<boolean>(false);
@@ -85,7 +84,6 @@ function App() {
   const [others, setOthers] = useState<AddressCollection[]>([]);
   const [nfts, setNfts] = useState<TokenListToken[]>([]);
   const [chainsWithUnverifiedContracts, setChainsWithUnverifiedContracts] = useState<number[]>([]);
-
   const [unverifiedContracts, setUnverifiedContracts] = useState<AddressCollection[]>([]);
   const [verifiedContracts, setVerifiedContracts] = useState<AddressCollection[]>([]);
 
@@ -213,7 +211,7 @@ function App() {
         setLoading(false);
         setIndexingNecessary(true);
         setAmountToIndex(res.data.amountToIndex);
-        return;
+        // return;
       }
       const sortedUnverifiedContracts = res.data.unverifiedContracts.sort((a :AddressCollection, b :AddressCollection) => {
         return a.unverifiedon[0] - b.unverifiedon[0];
@@ -364,7 +362,7 @@ function App() {
       {showStats && <Stats {...StatsPageProps}/>}
       {showPhishingDetected && <PhishingWarning {...warningPhishingPageProps}/>}
       {!showPhishingDetected && !showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
-        <body className='w-[380px] bg-slate-50'>
+        <body className='w-[380px] border-solid border-1 border-black'>
           <Header {...tabData}/>
           <Navbar {...NavbarProps}/>
           {/* 
@@ -374,17 +372,17 @@ function App() {
             <Logo/>
           }
           {loading && 
-            <div className="flex justify-center pb-2">
+            <div className="flex justify-center mt-10">
               <img src={blocksGif} className='h-20 w-20'/>
+              <span className='text-lg mt-6 ml-1'>Scanning addresses of the page..</span>
             </div>
           }
           {/*
-          
         */}
           {!loading && allAddressesOfPage.length == 0 && analysisDone && noAddressDetected &&
           <>
             <div className='flex items-center ml-14'>
-              <SignalSlashIcon className="m-2 h-8 w-8 text-gray-800 inline" aria-hidden="true" />
+              <SignalSlashIcon className="m-2 h-8 w-8 inline" aria-hidden="true" />
               <div className="text-lg font-semibold">
               No addresses detected
               </div>
@@ -400,19 +398,19 @@ function App() {
                 <div><ExclamationTriangleIcon className='w-12 h-12 ml-6'/></div>
                 <div></div>
               </div>
-              Indexing {amountToIndex} new addresses out of {allAddressesOfPage.length} addresses. Expected wait time ~{Math.round((amountToIndex * 2) / 60)} minutes
+              Indexing {amountToIndex} new addresses out of {allAddressesOfPage.length} addresses. Expected wait time of {Math.round((amountToIndex * 2) / 60)} minutes. Here is what we found so far:
             </div>
           </>
           }
           {/*
           
           */}
-          { allAddressesOfPage.length !== 0 && analysisDone && !loading && !indexingNecessary &&
+          { allAddressesOfPage.length !== 0 && analysisDone &&
           <>
 
             <div className="grid grid-cols-3 gap-0 pb-5">
               <div></div>
-              {percent < 100 &&
+              { !loading && !indexingNecessary && percent < 100 &&
               <div className='flex pl-1'>
                 <Circle className='absolute h-[100px] w-[100px] mx-1' percent={percent} strokeWidth={8} strokeColor={pgColor} trailWidth={0.01} strokeLinecap="round"/>
                 <div className={'pl-[30px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
@@ -430,7 +428,7 @@ function App() {
                 </div>
               </div>
               }
-              {percent === 100 &&
+              { !loading && !indexingNecessary && percent === 100 &&
               <div className='flex pl-1'>
                 <Circle className='absolute h-[100px] w-[100px] mx-1' percent={percent} strokeWidth={8} strokeColor={pgColor} trailWidth={0.01} strokeLinecap="round"/>
                 <div className={'pl-[24px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
@@ -450,50 +448,54 @@ function App() {
               }
               <div></div>
             </div>
-            <div className='text-lg font-semibold text-center pt-6 py-4'>
+            { !loading && !indexingNecessary &&
+            <>
+              <div className='text-lg font-semibold text-center pt-6 py-4'>
               Found {unverifiedContracts.length} unverified contracts out of the {unverifiedContracts.length+verifiedContracts.length} contracts contained in the page.
-            </div>
-            <div className='text-xs text-center'>Found unverified contracts on the following chains: <br/>
-              {chainsWithUnverifiedContracts.map((chainId, index) => {
-                if (index === chainsWithUnverifiedContracts.length-1) {
-                  return (
-                    <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}</span>
-                  );
-                } else {
-                  return (
-                    <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}, </span>
-                  );
-                }
-              })}
+              </div>
+              <div className='text-xs text-center'>Found unverified contracts on the following chains: <br/>
+                {chainsWithUnverifiedContracts.map((chainId, index) => {
+                  if (index === chainsWithUnverifiedContracts.length-1) {
+                    return (
+                      <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}</span>
+                    );
+                  } else {
+                    return (
+                      <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}, </span>
+                    );
+                  }
+                })}
               
-              <br/>
+                <br/>
 
-              <button
-                type="button"
-                className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-[#1DA1F2] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <a className="twitter-share-button text-center" href={prepareTweet()} data-size="large" target="_blank" rel="noreferrer">Tweet</a>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-twitter focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <a className="twitter-share-button text-center" href={prepareTweet()} data-size="large" target="_blank" rel="noreferrer">Tweet</a>
+                </button>
+              </div>
+            </>
+            }
             
             <div className='text-center my-2 mx-2'>
               <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
                 {unverifiedContracts.length > 0 &&
-                <div className="rounded-md bg-red-200 border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-red-100 hover:border-[0.5px] hover:border-red-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
+                <div className="rounded-md bg-red-200 border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-red-100 hover:border-[0.5px] hover:border-red-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
                   <dt className="text-xs text-red-500">Unverified Contracts</dt>
                   <dd className="mt-1 text-sm font-bold tracking-tight text-red-500">{unverifiedContracts.length}</dd>
                 </div>
                 }
                 {verifiedContracts.length > 0 &&
-                <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowVerifiedContracts(!showVerifiedContracts);}}>
-                  <dt className="text-xs text-blue-500">Verified Contracts</dt>
-                  <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{verifiedContracts.length}</dd>
+                <div className="rounded-md bg-white border-[0.5px]  shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowVerifiedContracts(!showVerifiedContracts);}}>
+                  <dt className="text-xs ">Verified Contracts</dt>
+                  <dd className="mt-1 text-sm font-semibold tracking-tight">{verifiedContracts.length}</dd>
                 </div>
                 }
                 { verifiedERC20s.length > 0 &&
-                  <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
-                    <dt className="text-xs text-blue-500">Verified ERC20s</dt>
-                    <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{verifiedERC20s.length}</dd>
+                  <div className="rounded-md bg-white border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
+                    <dt className="text-xs ">Verified ERC20s</dt>
+                    <dd className="mt-1 text-sm font-semibold tracking-tight">{verifiedERC20s.length}</dd>
                     <div className='flex'>
                       {/*
                       verifiedERC20s.slice(8,15).map((token) => {
@@ -504,15 +506,17 @@ function App() {
                   </div>
                 }
                 {nfts.length > 0 &&
-                <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
-                  <dt className="text-xs text-blue-500">NFT addresses</dt>
-                  <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{nfts.length}</dd>
+                <div className="rounded-md bg-white border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
+                  <dt className="text-xs">NFT addresses</dt>
+                  <dd className="mt-1 text-sm font-semibold tracking-tight">{nfts.length}</dd>
                 </div>
                 }
-                <div className="rounded-md bg-white border-[0.5px] shadow-md px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();setShowEOAs(!showEOAs);}}>
-                  <dt className="text-xs text-blue-500">Other Addresses</dt>
-                  <dd className="mt-1 text-sm font-semibold tracking-tight text-blue-500">{others.length}</dd>
+                {others.length > 0 &&
+                <div className="rounded-md bg-white border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();setShowEOAs(!showEOAs);}}>
+                  <dt className="text-xs">Other Addresses</dt>
+                  <dd className="mt-1 text-sm font-semibold tracking-tight">{others.length}</dd>
                 </div>
+                }
               </dl>
             </div>
           </>

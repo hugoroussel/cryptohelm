@@ -8,15 +8,17 @@ module.exports = {
     container: {
       center: true,
     },
-    /*
-    colors: {
-      blue: '#21325b',
-      white: '#ffffff',
-      gray: '#979695',
-      lblue: '#3498db',
+    theme: {
+      fontFamily: {
+        'body': ['"Roboto"'],
+      }
     },
-    */
-    extend: {},
+    extend: {
+      colors: {
+        lblue: '#3498db',
+        twitter: '#1da1f2',
+      },
+    },
   },
   plugins: [],
 };

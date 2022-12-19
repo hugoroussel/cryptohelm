@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, {useState } from 'react';
 import Header from './components/Header';
 import { AccountPageProps } from './types/types';
 import Navbar from './components/Navbar';
 import Logo from './components/Logo';
-import { getImageOfLogoUsingChainId } from './helpers';
 import { Disclosure } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
@@ -12,12 +11,12 @@ const faqs = [
   {
     question: 'What does this app do?',
     answer:
-      'Crypto Shield detects contract addresses contained in the dapps you visit and checks them on the different block explorer. It also prevents you from getting phished.',
+      'Crypto Helm detects contract addresses contained in the dapps you visit and checks them on the different block explorer. It also prevents you from getting phished.',
   }, 
   {
     question: 'What chains are supported?',
     answer:
-      'The supported chains are Ethereum, Polygon, Optimism, Arbitrum, Fantom, BSC, Avalanche, Gnosis Chain, Moonbeam.',
+      'The supported chains are Ethereum, Polygon, Optimism, Arbitrum, Celo, Fantom, BSC, Avalanche, Gnosis Chain, Moonbeam.',
   }, 
   {
     question: 'What is a "Verified" contract?',
@@ -48,23 +47,24 @@ function FAQ(pageProps :AccountPageProps) {
   const [open, setOpen] = useState<boolean>(false);
 
   return (
-    <body className='w-[380px] bg-gray-50'>
+    <body className='w-[380px]'>
       <Header {...pageProps.tabData}/>
       <Navbar {...pageProps.navbarProps}/>
-      <div className="bg-gray-50">
-        <div className="mx-auto max-w-7xl py-2 px-2">
+      <div className="">
+        <div className="mx-auto max-w-7xl py-1 px-2">
+          <Logo/>
           <div className="mx-auto max-w-3xl divide-y-2 divide-gray-200">
-            <h2 className="text-center text-lg font-bold tracking-tight text-gray-900">
+            <h2 className="text-center text-lg font-bold tracking-tight">
             Frequently asked questions
             </h2>
-            <dl className="mt-6 space-y-6 divide-y divide-gray-200">
+            <dl className="mt-3 space-y-6 divide-y divide-gray-200">
               {faqs.map((faq) => (
                 <Disclosure as="div" key={faq.question} className="pt-6">
                   {({open}) => (
                     <>
                       <dt className="text-md">
-                        <Disclosure.Button className="flex w-full items-start justify-between text-center text-gray-400">
-                          <span className="text-lg font-medium text-gray-900">{faq.question}</span>
+                        <Disclosure.Button className="flex w-full items-start justify-between text-center ">
+                          <span className="text-lg font-medium">{faq.question}</span>
                           <span className="ml-3 flex h-7 items-center">
                             <ChevronDownIcon
                               className={classNames(open ? '-rotate-180' : 'rotate-0', 'h-6 w-6 transform')}
@@ -74,7 +74,7 @@ function FAQ(pageProps :AccountPageProps) {
                         </Disclosure.Button>
                       </dt>
                       <Disclosure.Panel as="dd" className="mt-2 pr-12">
-                        <p className="text-base text-gray-500">{faq.answer}</p>
+                        <p className="text-base">{faq.answer}</p>
                       </Disclosure.Panel>
                     </>
                   )}
@@ -84,7 +84,7 @@ function FAQ(pageProps :AccountPageProps) {
           </div>
         </div>
         <br/>
-        <div className='text-xs text-gray-700 text-center py-3'>
+        <div className='text-xs text-center py-3'>
           <span>Powered by</span>
           <br/>
           <a className="text-blue-800 font-bold hover:underline" href="https://etherscan.io" target="_blank" rel="noreferrer">Etherscan.io, </a>

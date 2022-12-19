@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { NavbarProps } from '../types/types';
 
 
@@ -43,15 +43,14 @@ function Navbar(pageProps :NavbarProps) {
 
   return (
     <>
-      <hr className='-mt-6'/>
-      <div className='grid grid-cols-4 py-1'>
+      <div className='grid grid-cols-4 py-1 mb-5 -mt-6'>
         {pageProps.appTabs.map((tab, index) => {
           return(
             <div className='col-span-1' key={index}>
               <tab.icon
                 className={classNames(
-                  tab.current ? 'text-black' : 'text-gray-400',
-                  'h-9 w-9 ml-6 hover:text-blue-200'
+                  tab.current ? 'text-black' : 'text-gray-500',
+                  'h-9 w-9 ml-6 hover:text-[#424245]'
                 )}
                 aria-hidden="true"
                 onClick={(e) => {e.preventDefault();
@@ -62,7 +61,6 @@ function Navbar(pageProps :NavbarProps) {
           );
         })}
       </div>
-      <hr className='mb-5'/>
     </>
   );
 }

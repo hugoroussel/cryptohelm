@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { BoltSlashIcon, BoltIcon, UserCircleIcon} from '@heroicons/react/20/solid';
-import {QuestionMarkCircleIcon} from '@heroicons/react/24/outline';
+import { BoltSlashIcon, BoltIcon} from '@heroicons/react/20/solid';
 import axios from 'axios';
 import { TabData } from '../types/types';
 
@@ -19,7 +18,7 @@ function Header(pageProps :TabData){
   },[]);
 
   return(
-    <div className="bg-slate-50 h-[60px] grid grid-cols-4 gap-8 rounded-sm">
+    <div className="h-[60px] grid grid-cols-4 gap-8 rounded-sm">
       <div className="text-xs col-span-3 flex">
         <img src={pageProps.favIconUrl} className="h-6 w-6 ml-3 mt-1"/> 
         <span className="font-bold ml-1 mt-2 text-blue-500">{pageProps.url} </span>

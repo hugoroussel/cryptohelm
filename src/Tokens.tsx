@@ -42,7 +42,7 @@ function ERC20s(pageProps: ERC20sPageProps) {
                       <ArrowDownTrayIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();saveToJsonAndDownload(pageProps.erc20s);}}/>
                     </div>
                     <div></div>
-                    <div className="ml-7 text-lg flex col-span-3 text-center text-gray-600 font-semibold">{pageProps.erc20s.length} tokens</div>
+                    <div className="ml-7 text-lg flex col-span-3 text-center font-semibold">{pageProps.erc20s.length} tokens</div>
                     <div></div>
                     <div>
                       <XMarkIcon className='w-5 h-5 ml-1.5 hover:text-gray-400' onClick={(e)=>{e.preventDefault();pageProps.setShowTokens(!pageProps.showTokens);}}/>
@@ -50,7 +50,7 @@ function ERC20s(pageProps: ERC20sPageProps) {
                   </div>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-gray-50">
-                  {pageProps.erc20s.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No tokens found :(</div>}
+                  {pageProps.erc20s.length === 0 && <div className="text-center text-lg mt-10">No tokens found :(</div>}
                   {pageProps.erc20s.map((token) => (
                     <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={token.address}>
                       <div className="ml-2 flex">

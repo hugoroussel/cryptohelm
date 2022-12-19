@@ -2,14 +2,18 @@ import React from 'react';
 import {ExclamationTriangleIcon} from '@heroicons/react/20/solid';
 import {PhishingWarningPageProps} from './types/types';
 import Header from './components/Header';
+import Logo from './components/Logo';
 
 function PhishingWarning(pageProps :PhishingWarningPageProps){
   return(
     <body className='w-[380px] bg-black'>
+      <Header {...pageProps.tabData}/>
+      <Logo/>
       <div className="grid grid-cols-3 py-3">
-        <div><div><ExclamationTriangleIcon className='text-red-500 px-4'/>
-        </div></div>
-        <div></div>
+        <div><div>
+        </div>
+        </div>
+        <div><ExclamationTriangleIcon className='text-red-500 px-4'/></div>
       </div>
       <h1 className='px-4 text-lg font-bold text-white'>This website {`(${pageProps.tabData.url})`} is most likely a phishing or scam website. We strongly advise to not proceed. {pageProps.description !== '' ? (<><br/>Description: {pageProps.description}</>) : (<></>)} </h1>
       <br/>
