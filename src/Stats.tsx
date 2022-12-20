@@ -1,47 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Header from './components/Header';
-import { AccountPageProps } from './types/types';
+import { StatPageProps } from './types/types';
 import Navbar from './components/Navbar';
-import axios from 'axios';
 import CountUp from 'react-countup';
-import blocksGif from './blocks.gif';
 
 
-function Stats(pageProps :AccountPageProps) {
+function Stats(pageProps :StatPageProps) {
 
-
-  const [found, setFound] = useState(false);
-  const [loading, setLoading] = useState(true);
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [dappData, setDappData] = useState({} as any);
-
-
-  useEffect(() => {
-    async function getDefillamaData(){
-      const res = await axios.get('https://api.llama.fi/protocols');
-      // check if the current url is in the list of dapps
-      let urlStripped=pageProps.tabData.url;
-      if(!pageProps.tabData.url.includes('instadapp.io')){
-        urlStripped = urlStripped.replace('app.','');
-      }
-      urlStripped = urlStripped.replace('beta.','');
-      urlStripped = urlStripped.replace('trade.','');
-      urlStripped = urlStripped.replace('www.','');
-      urlStripped = urlStripped.replace('defi.','');
-      console.log('url stripped',urlStripped);
-      for(let i = 0; i < res.data.length; i++){
-        let urlCleaned = res.data[i].url.split('/').slice(0, 3).join('/');
-        urlCleaned = urlCleaned.replace('www.', '');
-        if(urlCleaned == urlStripped){
-          setFound(true);
-          setDappData(res.data[i]);
-        }
-      }
-    }
-    getDefillamaData();
-    setLoading(false);
-  },[]);
 
 
   function formatFunction(number :number) :string{
@@ -58,17 +23,18 @@ function Stats(pageProps :AccountPageProps) {
     <body className='w-[380px]'>
       <Header {...pageProps.tabData}/>
       <Navbar {...pageProps.navbarProps}/>
-      { !loading && found &&
+      { pageProps.foundDefillamaData &&
         (
           <div className=''>
-            <h1 className='text-2xl font-bold text-center'>{dappData.name}&apos;s Stats</h1>
+            <h1 className='text-2xl font-bold text-center'>{pageProps.defillamaData.name}&apos;s Stats</h1>
             <div className="grid grid-cols-3 my-3">
               <div></div>
               <div>
-                <img src={dappData.logo} className="h-14 w-14 ml-8"/>
+                <img src={pageProps.defillamaData.logo} className="h-14 w-14 ml-8"/>
               </div>
               <div></div>
             </div>
+
 
             <dl className="grid grid-cols-3 gap-1 mt-1 text-center px-1">
               <div key={1} className="rounded-lg bg-white px-4 py-5 shadow hover:bg-green-100">
@@ -77,7 +43,7 @@ function Stats(pageProps :AccountPageProps) {
                   <CountUp
                     start={0}
                     duration={1}
-                    end={Number(dappData.tvl)}
+                    end={Number(pageProps.defillamaData.tvl)}
                     preserveValue
                     formattingFn={formatFunction}
                     style={{
@@ -94,7 +60,7 @@ function Stats(pageProps :AccountPageProps) {
                   <CountUp
                     start={0}
                     duration={1}
-                    end={Number(dappData.mcap)}
+                    end={Number(pageProps.defillamaData.mcap)}
                     preserveValue
                     formattingFn={formatFunction}
                     style={{
@@ -110,7 +76,7 @@ function Stats(pageProps :AccountPageProps) {
                   <CountUp
                     start={0}
                     duration={1}
-                    end={Number(dappData.fdv)}
+                    end={Number(pageProps.defillamaData.fdv)}
                     preserveValue
                     formattingFn={formatFunction}
                     style={{
@@ -124,10 +90,10 @@ function Stats(pageProps :AccountPageProps) {
             <div className='grid grid-cols-3 text-center py-3'>
               <div></div>
               <div className="flex ml-5">
-                <a href={'https://www.coingecko.com/en/coins/'+dappData.gecko_id} target="_blank" rel="noreferrer">
+                <a href={'https://www.coingecko.com/en/coins/'+pageProps.defillamaData.gecko_id} target="_blank" rel="noreferrer">
                   <img src="https://static.coingecko.com/s/thumbnail-d5a7c1de76b4bc1332e48227dc1d1582c2c92721b5552aae76664eecb68345c9.png" className="h-8 w-8 mr-4"/>
                 </a>
-                <a href={'https://twitter.com/'+dappData.twitter} target="_blank" rel="noreferrer">
+                <a href={'https://twitter.com/'+pageProps.defillamaData.twitter} target="_blank" rel="noreferrer">
                   <img src="https://cdn.freebiesupply.com/logos/large/2x/twitter-3-logo-png-transparent.png" className="h-8 w-8"/>
                 </a>
 
@@ -143,15 +109,8 @@ function Stats(pageProps :AccountPageProps) {
             </div>
           </div>
         )}
-      {!loading && !found && (
+      {!pageProps.foundDefillamaData && (
         <div className='text-center text-lg py-5'>No Stats Found </div>
-      )
-      }
-      {loading && (
-        <div className="flex justify-center pb-2">
-          <img src={blocksGif} className='h-20 w-20'/>
-          <span className='text-lg mt-6 ml-1'>Scanning addresses of the page..</span>
-        </div>
       )
       }
     </body>

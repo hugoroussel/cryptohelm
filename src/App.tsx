@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon} from '@heroicons/react/20/solid';
-import {AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps, PhishingWarningPageProps} from './types/types';
+import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon, XCircleIcon, CheckBadgeIcon} from '@heroicons/react/20/solid';
+import {BetaPageProps,AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps, PhishingWarningPageProps, StatPageProps} from './types/types';
 import Tokens from './Tokens';
 import Header from './components/Header';
 import Navbar from './components/Navbar';
@@ -13,6 +13,7 @@ import FAQ from './FAQ';
 import EOAs from './EOAs';
 import Stats from './Stats';
 import Account from './Account';
+import Beta from './Beta';
 import PhishingWarning from './PhishingWarning';
 import blocksGif from './blocks.gif';
 import { Circle } from 'rc-progress';
@@ -76,6 +77,7 @@ function App() {
   const [showFaq, setShowFaq] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
   const [showPhishingDetected, setShowPhishingDetected] = useState<boolean>(false);
+  const [showBeta, setShowBeta] = useState<boolean>(false);
 
   // Data states
   const [allAddressesOfPage, setAllAddresesOfPage] = useState<string[]>([]);
@@ -86,6 +88,9 @@ function App() {
   const [chainsWithUnverifiedContracts, setChainsWithUnverifiedContracts] = useState<number[]>([]);
   const [unverifiedContracts, setUnverifiedContracts] = useState<AddressCollection[]>([]);
   const [verifiedContracts, setVerifiedContracts] = useState<AddressCollection[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dappData, setDappData] = useState({} as any);
+  const [foundDappData, setFoundDappData] = useState<boolean>(false);
 
   const nullTab: chrome.tabs.Tab = {
     active: false,
@@ -106,6 +111,28 @@ function App() {
     const newTabData = {favIconUrl: activeTab?.favIconUrl, title: activeTab?.title, url: urlCleaned} as TabData;
     detectPhishing(urlCleaned || '');
     setTabData(newTabData);
+    async function getDefillamaData(){
+      const res = await axios.get('https://api.llama.fi/protocols');
+      // check if the current url is in the list of dapps
+      let urlStripped=urlCleaned;
+      if(!urlCleaned?.includes('instadapp.io')){
+        urlStripped = urlStripped?.replace('app.','');
+      }
+      urlStripped = urlStripped?.replace('beta.','');
+      urlStripped = urlStripped?.replace('trade.','');
+      urlStripped = urlStripped?.replace('www.','');
+      urlStripped = urlStripped?.replace('defi.','');
+      console.log('url stripped',urlStripped);
+      for(let i = 0; i < res.data.length; i++){
+        let urlCleaned = res.data[i].url.split('/').slice(0, 3).join('/');
+        urlCleaned = urlCleaned.replace('www.', '');
+        if(urlCleaned == urlStripped){
+          setDappData(res.data[i]);
+          setFoundDappData(true);
+        }
+      }
+    }
+    getDefillamaData();
   }
 
   function detectPhishing(url :string){
@@ -234,12 +261,13 @@ function App() {
       const urls = JSON.parse(localStorage.getItem('urls') || '[]');
       let unverifiedContractsFoundSoFar = JSON.parse(localStorage.getItem('unverifiedContractsAmount') || '0');
       // check if the url is already in the list
-      if (urls.includes(tabData.url)){
+      if (urls.includes(tabData.url)&&sortedUnverifiedContracts.length !== 0){
         return;
       }
       const newUrls = [...urls, tabData.url];
       localStorage.setItem('urls', JSON.stringify(newUrls));
-      unverifiedContractsFoundSoFar += res.data.unverifiedContracts.length;
+      unverifiedContractsFoundSoFar = unverifiedContractsFoundSoFar+sortedUnverifiedContracts.length;
+      console.log('setting this in local storage', unverifiedContractsFoundSoFar);
       localStorage.setItem('unverifiedContractsAmount', JSON.stringify(unverifiedContractsFoundSoFar));
     }
     callServer(addresses);
@@ -271,6 +299,14 @@ function App() {
     }
     tokenlistPlaceholder();
     */
+
+    const betaTest = localStorage.getItem('betaTest');
+    if (betaTest === null) {
+      setShowBeta(true);
+    }
+
+
+
     setAppTabs(tabs);
     livenessCheck();
     // detectPhishing('metamaskconnect.online');
@@ -345,9 +381,16 @@ function App() {
     navbarProps: NavbarProps,
   };
 
-  const StatsPageProps : AccountPageProps = {
+  const StatsPageProps : StatPageProps = {
     tabData: tabData,
     navbarProps: NavbarProps,
+    foundDefillamaData: foundDappData,
+    defillamaData: dappData,
+  };
+
+  const betaPageProps : BetaPageProps = {
+    setShowBeta: setShowBeta,
+    tabData: tabData,
   };
 
   return (
@@ -361,7 +404,8 @@ function App() {
       {showFaq && <FAQ {...AccountPageProps}/>}
       {showStats && <Stats {...StatsPageProps}/>}
       {showPhishingDetected && <PhishingWarning {...warningPhishingPageProps}/>}
-      {!showPhishingDetected && !showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
+      {showBeta && <Beta {...betaPageProps}/>}
+      { !showBeta && !showPhishingDetected && !showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
         <body className='w-[380px] border-solid border-1 border-black'>
           <Header {...tabData}/>
           <Navbar {...NavbarProps}/>
@@ -431,7 +475,7 @@ function App() {
               { !loading && !indexingNecessary && percent === 100 &&
               <div className='flex pl-1'>
                 <Circle className='absolute h-[100px] w-[100px] mx-1' percent={percent} strokeWidth={8} strokeColor={pgColor} trailWidth={0.01} strokeLinecap="round"/>
-                <div className={'pl-[24px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
+                <div className={'pl-[21px] pt-[35px] z-10 font-bold text-2xl '+'text-['+pgColor+']'}>
                   <CountUp
                     start={0}
                     duration={0.5}
@@ -474,6 +518,23 @@ function App() {
                 >
                   <a className="twitter-share-button text-center" href={prepareTweet()} data-size="large" target="_blank" rel="noreferrer">Tweet</a>
                 </button>
+
+                <div className="grid grid-cols-5 text-xl font-bold my-3">
+                  <div className='flex col-start-2 col-span-3 ml-3'>
+                    {(dappData.audits !== '0' && foundDappData) ? (
+                      <>
+                        <span className=''>Found {dappData.audits} Audits</span>
+                        <CheckBadgeIcon className="h-7 w-7 text-blue-600 ml-2"/>
+                      </>
+                    ) : 
+                      (
+                        <>
+                          <span className=''>No Audits Found</span>
+                          <XCircleIcon className="h-7 w-7 text-red-600 ml-2"/>
+                        </>
+                      )}
+                  </div>
+                </div>
               </div>
             </>
             }
@@ -481,8 +542,8 @@ function App() {
             <div className='text-center my-2 mx-2'>
               <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
                 {unverifiedContracts.length > 0 &&
-                <div className="rounded-md bg-red-200 border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-red-100 hover:border-[0.5px] hover:border-red-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
-                  <dt className="text-xs text-red-500">Unverified Contracts</dt>
+                <div className="rounded-md bg-red-50 border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-red-100 hover:border-[0.5px] hover:border-red-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
+                  <dt className="text-xs text-red-500 font-bold">Unverified Contracts</dt>
                   <dd className="mt-1 text-sm font-bold tracking-tight text-red-500">{unverifiedContracts.length}</dd>
                 </div>
                 }

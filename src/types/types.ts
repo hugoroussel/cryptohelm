@@ -13,6 +13,30 @@ export interface AccountPageProps {
     navbarProps: NavbarProps;
 }
 
+export interface BetaPageProps {
+    setShowBeta: React.Dispatch<React.SetStateAction<boolean>>;
+    tabData : TabData;
+}
+
+export interface StatPageProps {
+    // navbarProps: NavbarProps;
+    tabData : TabData;
+    navbarProps: NavbarProps;
+    defillamaData: DefillamaData;
+    foundDefillamaData: boolean;
+}
+
+
+export interface DefillamaData {
+    tvl : number;
+    fdv : number;
+    mcap : number;
+    name : string;
+    logo : string;
+    gecko_id : string;
+    twitter : string;
+}
+
 export interface NavbarProps {
     appTabs : AppTab[];
     setAppTabs: React.Dispatch<React.SetStateAction<AppTab[]>>;
