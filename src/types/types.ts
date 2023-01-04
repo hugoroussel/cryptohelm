@@ -26,6 +26,12 @@ export interface StatPageProps {
     foundDefillamaData: boolean;
 }
 
+export interface ExplorePageProps {
+    // navbarProps: NavbarProps;
+    tabData : TabData;
+    navbarProps: NavbarProps;
+}
+
 
 export interface DefillamaData {
     tvl : number;
@@ -35,6 +41,7 @@ export interface DefillamaData {
     logo : string;
     gecko_id : string;
     twitter : string;
+    audits : number;
 }
 
 export interface NavbarProps {
@@ -46,6 +53,8 @@ export interface NavbarProps {
     setShowFAQ : React.Dispatch<React.SetStateAction<boolean>>;
     showStats : boolean;
     setShowStats : React.Dispatch<React.SetStateAction<boolean>>;
+    showExplore : boolean;
+    setShowExplore : React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface AppTab {

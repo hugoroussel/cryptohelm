@@ -1,7 +1,7 @@
 {
-  "name": "MetaScan",
-  "description": "Yes",
-  "version": "1.0",
+  "name": "CryptoHelm",
+  "description": "CryptoHelm helps you detect unverified contracts addresses in dapps and prevents scam and phishing. Web3 Antivirus, wallet protector",
+  "version": "0.0.0.1",
   "manifest_version": 3,
   "action": {
       "default_popup": "index.html",
@@ -29,8 +29,6 @@
     }
   ],
   "icons": {
-      "16": "logo192.png",
-      "48": "logo192.png",
-      "128": "logo192.png"
+      "192": "./logo192.png"
   }
 }

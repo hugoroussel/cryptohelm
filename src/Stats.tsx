@@ -20,10 +20,10 @@ function Stats(pageProps :StatPageProps) {
   }
 
   return (
-    <body className='w-[380px]'>
-      <Header {...pageProps.tabData}/>
-      <Navbar {...pageProps.navbarProps}/>
-      { pageProps.foundDefillamaData &&
+    <>
+      <body>
+        <Header {...pageProps.tabData}/>
+        { pageProps.foundDefillamaData &&
         (
           <div className=''>
             <h1 className='text-2xl font-bold text-center'>{pageProps.defillamaData.name}&apos;s Stats</h1>
@@ -36,9 +36,9 @@ function Stats(pageProps :StatPageProps) {
             </div>
 
 
-            <dl className="grid grid-cols-3 gap-1 mt-1 text-center px-1">
-              <div key={1} className="rounded-lg bg-white px-4 py-5 shadow hover:bg-green-100">
-                <dt className="text-md font-medium ">TVL</dt>
+            <dl className="grid grid-cols-2 gap-1 mt-1 text-center px-1">
+              <div key={1} className="rounded-lg px-4 py-5 nm-inset-zinc-800">
+                <dt className="text-md font-medium">TVL</dt>
                 <dd className="mt-1 text-xl font-semibold tracking-tight">
                   <CountUp
                     start={0}
@@ -54,7 +54,7 @@ function Stats(pageProps :StatPageProps) {
                 </dd>
               </div>
 
-              <div key={1} className="rounded-lg bg-white px-4 py-5 shadow-inner hover:bg-green-100">
+              <div key={1} className="rounded-lg px-4 py-5 nm-inset-zinc-800">
                 <dt className="text-md font-medium">Market Cap</dt>
                 <dd className="mt-1 text-xl font-semibold tracking-tight">
                   <CountUp
@@ -70,7 +70,8 @@ function Stats(pageProps :StatPageProps) {
                   />$
                 </dd>
               </div>
-              <div key={1} className="rounded-lg bg-white px-4 py-5 shadow-inner hover:bg-green-100">
+
+              <div key={1} className="rounded-lg px-4 py-5 nm-inset-zinc-800">
                 <dt className="text-md font-medium">FDV</dt>
                 <dd className="mt-1 text-xl font-semibold tracking-tight"> 
                   <CountUp
@@ -86,7 +87,25 @@ function Stats(pageProps :StatPageProps) {
                   />$
                 </dd>
               </div>
+
+              <div key={1} className="rounded-lg px-4 py-5 nm-inset-zinc-800">
+                <dt className="text-md font-medium">Audits</dt>
+                <dd className="mt-1 text-xl font-semibold tracking-tight"> 
+                  <CountUp
+                    start={0}
+                    duration={0.5}
+                    end={Number(pageProps.defillamaData.audits)}
+                    preserveValue
+                    formattingFn={formatFunction}
+                    style={{
+                      color: 'inherit'
+                    }}
+                    className='count-up jockey'
+                  />
+                </dd>
+              </div>
             </dl>
+            {/*
             <div className='grid grid-cols-3 text-center py-3'>
               <div></div>
               <div className="flex ml-5">
@@ -96,24 +115,21 @@ function Stats(pageProps :StatPageProps) {
                 <a href={'https://twitter.com/'+pageProps.defillamaData.twitter} target="_blank" rel="noreferrer">
                   <img src="https://cdn.freebiesupply.com/logos/large/2x/twitter-3-logo-png-transparent.png" className="h-8 w-8"/>
                 </a>
-
                 <br/>
                 <br/>
               </div>
               <div></div>
             </div>
-            <div className='grid grid-cols-5 py-1'>
-              <div></div>
-              <div className='flex col-span-3 ml-10'>Powered by &nbsp; <img src="https://mdtacademy.com/wp-content/uploads/2022/08/DeFiLlama-Logo.png" className="h-6 pb-2"/></div>
-              <div></div>
-            </div>
+          */}
           </div>
         )}
-      {!pageProps.foundDefillamaData && (
-        <div className='text-center text-lg py-5'>No Stats Found </div>
-      )
-      }
-    </body>
+        {!pageProps.foundDefillamaData && (
+          <div className='text-center text-lg py-5'>No stats found for current website</div>
+        )
+        }
+        <Navbar {...pageProps.navbarProps}/>
+      </body>
+    </>
   );
 }
 export default Stats;

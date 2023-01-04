@@ -28,7 +28,7 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
 
   return (
     <>
-      <body className='w-[340px] h-[450px] bg-gray-50'>
+      <body className=''>
         <Header {...pageProps.tabData}/>
         <div className="lg:-mx-8">
           <div className="lg:px-8">
@@ -47,10 +47,10 @@ function UnverifiedContracts(pageProps: ContractsPageProps) {
                     </div>
                   </div>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white ">
+                <tbody className="divide-y divide-gray-200">
                   {pageProps.contracts.length === 0 && <div className="text-center text-lg mt-10">No contracts founds</div>}
                   {pageProps.contracts.map((contract) => (
-                    <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={contract.address}>
+                    <div className="grid grid-cols-7 items-center hover:bg-gray-400" key={contract.address}>
                       <div className="ml-2">
                         <img src={getImageOfLogoUsingChainId(contract.unverifiedon[0])} className="h-5 w-5"/>
                       </div>

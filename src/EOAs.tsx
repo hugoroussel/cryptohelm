@@ -26,7 +26,7 @@ function EOAs(pageProps: ContractsPageProps) {
 
   return (
     <>
-      <body className='w-[340px] h-[450px] bg-gray-50'>
+      <body className=''>
         <Header {...pageProps.tabData}/>
         <div className="lg:-mx-8">
           <div className="lg:px-8">
@@ -45,10 +45,10 @@ function EOAs(pageProps: ContractsPageProps) {
                     </div>
                   </div>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white ">
+                <tbody className="divide-y divide-gray-200">
                   {pageProps.contracts.length === 0 && <div className="text-center text-lg text-gray-500 mt-10">No contracts founds</div>}
                   {pageProps.contracts.map((contract) => (
-                    <div className="grid grid-cols-7 items-center hover:bg-gray-200" key={contract.address}>
+                    <div className="grid grid-cols-7 items-center hover:bg-gray-400" key={contract.address}>
                       <div className="ml-2">
                       </div>
                       <div className="ml-7 text-lg mt-1 col-span-5 text-center">

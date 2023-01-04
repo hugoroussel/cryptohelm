@@ -26,16 +26,25 @@ function Navbar(pageProps :NavbarProps) {
       pageProps.setShowAccount(!pageProps.showAccount);
       pageProps.setShowFAQ(false);
       pageProps.setShowStats(false);
+      pageProps.setShowExplore(false);
     } else if (newTabName === 'info') {
       pageProps.setShowFAQ(true);
       pageProps.setShowAccount(false);
       pageProps.setShowStats(false);
+      pageProps.setShowExplore(false);
     } else if (newTabName === 'shield') {
       pageProps.setShowAccount(false);
       pageProps.setShowFAQ(false);
       pageProps.setShowStats(false);
+      pageProps.setShowExplore(false);
     } else if (newTabName === 'stats') {
       pageProps.setShowStats(true);
+      pageProps.setShowAccount(false);
+      pageProps.setShowFAQ(false);
+      pageProps.setShowExplore(false);
+    } else if (newTabName === 'explore') {
+      pageProps.setShowExplore(true);
+      pageProps.setShowStats(false);
       pageProps.setShowAccount(false);
       pageProps.setShowFAQ(false);
     }
@@ -43,14 +52,14 @@ function Navbar(pageProps :NavbarProps) {
 
   return (
     <>
-      <div className='grid grid-cols-4 py-1 mb-5 -mt-6'>
+      <div className='grid grid-cols-4 bg-inherit mt-2'>
         {pageProps.appTabs.map((tab, index) => {
           return(
             <div className='col-span-1' key={index}>
               <tab.icon
                 className={classNames(
-                  tab.current ? 'text-black' : 'text-gray-500',
-                  'h-9 w-9 ml-6 hover:text-[#424245]'
+                  tab.current ? 'text-white' : 'text-zinc-500',
+                  'h-9 w-9 mx-10 mb-2'
                 )}
                 aria-hidden="true"
                 onClick={(e) => {e.preventDefault();

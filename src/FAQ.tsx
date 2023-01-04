@@ -49,7 +49,6 @@ function FAQ(pageProps :AccountPageProps) {
   return (
     <body className='w-[380px]'>
       <Header {...pageProps.tabData}/>
-      <Navbar {...pageProps.navbarProps}/>
       <div className="">
         <div className="mx-auto max-w-7xl py-1 px-2">
           <Logo/>
@@ -100,6 +99,7 @@ function FAQ(pageProps :AccountPageProps) {
             APIs
         </div>
       </div>
+      <Navbar {...pageProps.navbarProps}/>
     </body>
   );
 }

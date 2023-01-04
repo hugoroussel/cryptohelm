@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import './index.css';
 import {useState} from 'react';
 import axios from 'axios';
-import { SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon, XCircleIcon, CheckBadgeIcon} from '@heroicons/react/20/solid';
-import {BetaPageProps,AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps, PhishingWarningPageProps, StatPageProps} from './types/types';
+import { BuildingStorefrontIcon ,SignalSlashIcon, ExclamationTriangleIcon,ArrowTrendingUpIcon, ShieldCheckIcon, UserIcon, XCircleIcon, CheckBadgeIcon} from '@heroicons/react/20/solid';
+import {ExplorePageProps,BetaPageProps,AccountPageProps,ContractsPageProps,TabData, TokenListToken,ERC20sPageProps,AddressCollection, AppTab, NavbarProps, PhishingWarningPageProps, StatPageProps} from './types/types';
 import Tokens from './Tokens';
 import Header from './components/Header';
 import Navbar from './components/Navbar';
@@ -13,6 +13,7 @@ import FAQ from './FAQ';
 import EOAs from './EOAs';
 import Stats from './Stats';
 import Account from './Account';
+import Explore from './Explore';
 import Beta from './Beta';
 import PhishingWarning from './PhishingWarning';
 import blocksGif from './blocks.gif';
@@ -21,13 +22,15 @@ import {percentToColor, getChainsWithUnverifiedContracts, getNameOfChainWithChai
 import Logo from './components/Logo';
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import CountUp from 'react-countup';
-
+import unverifiedPlaceholder from './unverifiedPlaceholder.json';
 const tabs = [
   { name: 'shield', href: '#', icon: ShieldCheckIcon, current: true },
+  { name: 'explore', href: '#', icon: BuildingStorefrontIcon, current: false },
   { name: 'stats', href: '#', icon: ArrowTrendingUpIcon, current: false },
   { name: 'account', href: '#', icon: UserIcon, current: false },
-  { name: 'info', href: '#', icon: QuestionMarkCircleIcon, current: false },
 ];
+
+const REACT_APP_SERVER_URL = 'https://cryptohelmnode-3npc2uvlhq-no.a.run.app';
 
 function getAddresses() {
   // get the inner html of the page
@@ -59,7 +62,7 @@ function App() {
   // App state
   const [loading, setLoading] = useState<boolean>(true);
   const [indexingNecessary, setIndexingNecessary] = useState<boolean>(false);
-  const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/s7l9o11.png', title: '', url: 'unknown'});
+  const [tabData, setTabData] = useState<TabData>({favIconUrl: 'https://i.imgur.com/rao6F5h.png', title: '', url: 'unknown'});
   const [serverLive, setServerLive] = useState<boolean>(false);
   const [noAddressDetected, setNoAddressDetected] = useState<boolean>(false);
   const [analysisDone, setAnalysisDone] = useState<boolean>(false);
@@ -76,8 +79,9 @@ function App() {
   const [showAccount, setShowAccount] = useState<boolean>(false);
   const [showFaq, setShowFaq] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [showExplore, setShowExplore] = useState<boolean>(false);
   const [showPhishingDetected, setShowPhishingDetected] = useState<boolean>(false);
-  const [showBeta, setShowBeta] = useState<boolean>(false);
+  const [showBeta, setShowBeta] = useState<boolean>(true);
 
   // Data states
   const [allAddressesOfPage, setAllAddresesOfPage] = useState<string[]>([]);
@@ -231,8 +235,8 @@ function App() {
     }
     setNoAddressDetected(false);
     async function callServer(addresses : string[]) {
-      const data = {addresses: addresses};
-      const res = await axios.post(`${process.env.REACT_APP_SERVER_URL}/analyze`, data);
+      const data = {addresses: addresses, url: tabData.url};
+      const res = await axios.post(`${REACT_APP_SERVER_URL}/analyze`, data);
       if (res.data.amountToIndex > 0){
         setAnalysisDone(true);
         setLoading(false);
@@ -274,7 +278,7 @@ function App() {
   }
 
   async function livenessCheck() {
-    const res = await axios.get(`${process.env.REACT_APP_SERVER_URL}/ping`);
+    const res = await axios.get(`${REACT_APP_SERVER_URL}/ping`);
     if (res.data === 'Server is running') {
       setServerLive(true);
     }
@@ -287,6 +291,7 @@ function App() {
   }
 
   useEffect(() => {
+    
     /*
     const placeHolderData = JSON.parse(JSON.stringify(unverifiedPlaceholder));
     setUnverifiedContracts(placeHolderData);
@@ -299,13 +304,12 @@ function App() {
     }
     tokenlistPlaceholder();
     */
+    
 
     const betaTest = localStorage.getItem('betaTest');
     if (betaTest === null) {
       setShowBeta(true);
     }
-
-
 
     setAppTabs(tabs);
     livenessCheck();
@@ -374,12 +378,20 @@ function App() {
     showFAQ: showFaq,
     showStats: showStats,
     setShowStats: setShowStats,
+    setShowExplore : setShowExplore,
+    showExplore: showExplore,
   };
 
   const AccountPageProps : AccountPageProps = {
     tabData: tabData,
     navbarProps: NavbarProps,
   };
+
+  const ExplorePageProps : ExplorePageProps = {
+    tabData: tabData,
+    navbarProps: NavbarProps,
+  };
+
 
   const StatsPageProps : StatPageProps = {
     tabData: tabData,
@@ -397,18 +409,20 @@ function App() {
     <>
       {showTokens && <Tokens {...erc20PageProps}/>}
       {showNfts && <Tokens {...nftsPageProps}/>}
+      {showBeta && <Beta {...betaPageProps}/>}
       {showEOAs && <EOAs {...EOAsPageProps}/>}
       {showUnverifiedContracts && <UnverifiedContracts {...unverifiedContractPageProps}/>}
       {showVerifiedContracts && <VerifiedContracts {...verifiedContractPageProps}/>}
       {showAccount && <Account {...AccountPageProps}/>}
       {showFaq && <FAQ {...AccountPageProps}/>}
       {showStats && <Stats {...StatsPageProps}/>}
+      {showExplore && <Explore {...ExplorePageProps}/>}
       {showPhishingDetected && <PhishingWarning {...warningPhishingPageProps}/>}
-      {showBeta && <Beta {...betaPageProps}/>}
-      { !showBeta && !showPhishingDetected && !showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
-        <body className='w-[380px] border-solid border-1 border-black'>
+      {/*showBeta && <Beta {...betaPageProps}/>*/}
+      {!showBeta && !showExplore &&!showPhishingDetected && !showStats && !showFaq && !showAccount && !showEOAs && !showVerifiedContracts && !showUnverifiedContracts && !showNfts && !showTokens &&
+      <>
+        <body>
           <Header {...tabData}/>
-          <Navbar {...NavbarProps}/>
           {/* 
           
           */}
@@ -416,10 +430,19 @@ function App() {
             <Logo/>
           }
           {loading && 
-            <div className="flex justify-center mt-10">
-              <img src={blocksGif} className='h-20 w-20'/>
-              <span className='text-lg mt-6 ml-1'>Scanning addresses of the page..</span>
+          <>
+            <div className="">
+              <Logo/>
             </div>
+            <br/>
+            <br/>
+            <br/>
+            <span className='text-lg ml-10 flex'>Scanning addresses of the page..
+              <img className='h-8 w-8' src={blocksGif}/>
+            </span>
+            
+            <br/>
+          </>
           }
           {/*
         */}
@@ -494,47 +517,16 @@ function App() {
             </div>
             { !loading && !indexingNecessary &&
             <>
-              <div className='text-lg font-semibold text-center pt-6 py-4'>
+              <div className='text-lg font-semibold text-center pt-6 py-4 px-3'>
               Found {unverifiedContracts.length} unverified contracts out of the {unverifiedContracts.length+verifiedContracts.length} contracts contained in the page.
               </div>
-              <div className='text-xs text-center'>Found unverified contracts on the following chains: <br/>
-                {chainsWithUnverifiedContracts.map((chainId, index) => {
-                  if (index === chainsWithUnverifiedContracts.length-1) {
-                    return (
-                      <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}</span>
-                    );
-                  } else {
-                    return (
-                      <span key={chainId} className="font-semibold">{getNameOfChainWithChainId(chainId)}, </span>
-                    );
-                  }
-                })}
-              
-                <br/>
-
+              <div className='text-xs text-center'>
                 <button
                   type="button"
-                  className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-twitter focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-twitter focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 nm-convex-[#1da1f2]"
                 >
                   <a className="twitter-share-button text-center" href={prepareTweet()} data-size="large" target="_blank" rel="noreferrer">Tweet</a>
                 </button>
-
-                <div className="grid grid-cols-5 text-xl font-bold my-3">
-                  <div className='flex col-start-2 col-span-3 ml-3'>
-                    {(dappData.audits !== '0' && foundDappData) ? (
-                      <>
-                        <span className=''>Found {dappData.audits} Audits</span>
-                        <CheckBadgeIcon className="h-7 w-7 text-blue-600 ml-2"/>
-                      </>
-                    ) : 
-                      (
-                        <>
-                          <span className=''>No Audits Found</span>
-                          <XCircleIcon className="h-7 w-7 text-red-600 ml-2"/>
-                        </>
-                      )}
-                  </div>
-                </div>
               </div>
             </>
             }
@@ -542,19 +534,19 @@ function App() {
             <div className='text-center my-2 mx-2'>
               <dl className="mt-5 grid grid-cols-2 gap-1 sm:grid-cols-3">
                 {unverifiedContracts.length > 0 &&
-                <div className="rounded-md bg-red-50 border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-red-100 hover:border-[0.5px] hover:border-red-500" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
-                  <dt className="text-xs text-red-500 font-bold">Unverified Contracts</dt>
-                  <dd className="mt-1 text-sm font-bold tracking-tight text-red-500">{unverifiedContracts.length}</dd>
+                <div className="rounded-md px-4 py-5 sm:p-6 nm-inset-zinc-800 hover:nm-inset-zinc-700-xl" onClick={(e) => {e.preventDefault();setShowUnverifiedContracts(!showUnverifiedContracts);}}>
+                  <dt className="text-xs font-bold">Unverified Contracts</dt>
+                  <dd className="mt-1 text-sm font-bold tracking-tight">{unverifiedContracts.length}</dd>
                 </div>
                 }
                 {verifiedContracts.length > 0 &&
-                <div className="rounded-md bg-white border-[0.5px]  shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowVerifiedContracts(!showVerifiedContracts);}}>
+                <div className="rounded-md px-4 py-5 sm:p-6 nm-inset-zinc-800 hover:nm-inset-zinc-700-xl" onClick={(e) => {e.preventDefault();setShowVerifiedContracts(!showVerifiedContracts);}}>
                   <dt className="text-xs ">Verified Contracts</dt>
                   <dd className="mt-1 text-sm font-semibold tracking-tight">{verifiedContracts.length}</dd>
                 </div>
                 }
                 { verifiedERC20s.length > 0 &&
-                  <div className="rounded-md bg-white border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
+                  <div className="rounded-md px-4 py-5 sm:p-6 nm-inset-zinc-800 hover:nm-inset-zinc-700-xl" onClick={(e) => {e.preventDefault();setShowTokens(!showTokens);}}> 
                     <dt className="text-xs ">Verified ERC20s</dt>
                     <dd className="mt-1 text-sm font-semibold tracking-tight">{verifiedERC20s.length}</dd>
                     <div className='flex'>
@@ -567,13 +559,13 @@ function App() {
                   </div>
                 }
                 {nfts.length > 0 &&
-                <div className="rounded-md bg-white border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
+                <div className="rounded-md px-4 py-5 sm:p-6 nm-inset-zinc-800 hover:nm-inset-zinc-700-xl " onClick={(e) => {e.preventDefault();setShowNfts(!showNfts);}}>
                   <dt className="text-xs">NFT addresses</dt>
                   <dd className="mt-1 text-sm font-semibold tracking-tight">{nfts.length}</dd>
                 </div>
                 }
                 {others.length > 0 &&
-                <div className="rounded-md bg-white border-[0.5px] shadow-inner px-4 py-5 sm:p-6 hover:bg-blue-100 hover:border-[0.5px] hover:border-blue-500" onClick={(e)=>{e.preventDefault();setShowEOAs(!showEOAs);}}>
+                <div className="rounded-md px-4 py-5 sm:p-6 nm-inset-zinc-800 hover:nm-inset-zinc-700-xl " onClick={(e)=>{e.preventDefault();setShowEOAs(!showEOAs);}}>
                   <dt className="text-xs">Other Addresses</dt>
                   <dd className="mt-1 text-sm font-semibold tracking-tight">{others.length}</dd>
                 </div>
@@ -582,7 +574,9 @@ function App() {
             </div>
           </>
           }
+          <Navbar {...NavbarProps}/>
         </body>
+      </>
       }
     </>
   );
