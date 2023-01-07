@@ -286,7 +286,7 @@ function App() {
 
   function prepareTweet(){
     const chains = getChainsWithUnverifiedContracts(unverifiedContracts);
-    const res = 'It%20seems%20'+tabData.url+'%20source%20code%20contains%20'+unverifiedContracts.length+'%20unverified%20contracts%20on%20'+chains.length+'%20different%20chains.%20To%20see%20the%20full%20list,%20download%20the%20Crypto%20Helm%20Chrome%20Extension.';
+    const res = 'It%20seems%20'+tabData.url+'%20source%20code%20contains%20'+unverifiedContracts.length+'%20unverified%20contracts%20on%20'+chains.length+'%20different%20chains.%20To%20see%20the%20full%20list,%20download%20the%20Crypto%20Helm%20Chrome%20Extension%20@getcryptohelm.';
     return 'https://twitter.com/intent/tweet?text='+res; 
   }
 

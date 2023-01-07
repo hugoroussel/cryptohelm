@@ -13,8 +13,8 @@ function nameToLogo(name :string){
   }
 }
 
-//const REACT_APP_SERVER_URL = 'https://cryptohelmnode-3npc2uvlhq-no.a.run.app';
-const REACT_APP_SERVER_URL = 'http://localhost:8080';
+const REACT_APP_SERVER_URL = 'https://cryptohelmnode-3npc2uvlhq-no.a.run.app';
+// const REACT_APP_SERVER_URL = 'http://localhost:8080';
 
 function Account(pageProps :AccountPageProps) {
 

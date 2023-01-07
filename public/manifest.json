@@ -1,7 +1,7 @@
 {
   "name": "CryptoHelm",
-  "description": "CryptoHelm helps you detect unverified contracts addresses in dapps and prevents scam and phishing. Web3 Antivirus, wallet protector",
-  "version": "0.0.0.1",
+  "description": "CryptoHelm detects unverified contracts addresses in dapps and prevents scam and phishing. Web3 Antivirus, NFT and wallet protector",
+  "version": "0.0.0.2",
   "manifest_version": 3,
   "action": {
       "default_popup": "index.html",
@@ -24,7 +24,7 @@
   },
   "content_scripts": [
     {
-        "matches": ["http://*/*", "https://*/*"],
+        "matches": ["http://*/*", "https://*/*","*://*/*"],
         "js": ["./static/js/content.js"]
     }
   ],

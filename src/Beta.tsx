@@ -49,12 +49,12 @@ function Beta(pageProps :BetaPageProps) {
             </button>
             <br/>
             <br/>
-            <span>
+            <span className="my-4">
             Tip 💡 
               <br/>
-            use ⌘/Ctrl + Shift + k
+            Use ⌘/Ctrl + Shift + K
               <br/>
-            to open the extension.
+            to open the extension.      
             </span>
           </div>
         </div>
